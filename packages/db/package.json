@@ -6,16 +6,26 @@
   "exports": {
     ".": "./dist/index.js"
   },
+  "dependencies": {
+    "@prisma/client": "^6.19.1",
+    "@repo/env": "*",
+    "pg": "^8.12.0"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint --max-warnings 0",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@types/node": "^22.15.3",
+    "@types/pg": "^8.11.6",
     "eslint": "^9.39.1",
+    "prisma": "^6.19.1",
     "typescript": "5.9.2"
   }
 }

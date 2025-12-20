@@ -5,7 +5,6 @@
     "incremental": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "moduleResolution": "node",
     "allowImportingTsExtensions": true,
     "noEmit": true
   },

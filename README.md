@@ -14,4 +14,13 @@ packages/
   pricing/
   trading/
   events/
-  utils/```
+  utils/
+
+```
+
+
+“apps/api is responsible for HTTP request handling only.
+It does not own business logic or infrastructure details.”
+
+“All database access lives in packages/db.
+Apps consume DB functionality through exported functions only.”

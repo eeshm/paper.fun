@@ -1,10 +1,11 @@
 import express from 'express';
 import type { Express } from 'express';
+import { initDb, checkDbHealth, shutdownDb } from '@repo/db';
 import { requestIdMiddleware, errorHandler } from './middlewares/index.ts';
 
-/**
- * Creates and configures the Express application
- */
+console.log('API module loaded, starting initialization...');
+
+
 export function createApp(): Express {
   const app = express();
 
@@ -18,15 +19,15 @@ export function createApp(): Express {
   app.use(requestIdMiddleware);
 
   // Health check endpoint
-  app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok' });
+  app.get('/health', async (_req, res) => {
+    const db = await checkDbHealth();
+
+    if (!db.ok) {
+      return res.status(503).json({ status: 'degraded', db });
+    }
+
+    return res.status(200).json({ status: 'ok', db });
   });
-
-  // TODO: Add routes here
-  // app.use('/api/users', userRoutes);
-  // app.use('/api/trades', tradeRoutes);
-
-
 
   // 3. Centralized error handler (must be last)
   app.use(errorHandler);
@@ -34,20 +35,35 @@ export function createApp(): Express {
   return app;
 }
 
-/**
- * Start the server if this file is run directly
- */
-const isMainModule = process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js');
-if (isMainModule) {
-  const app = createApp();
-  const port = process.env.PORT || 3000;
-  
-  const server = app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
+const isMainModule = process.argv[1]?.includes('index.ts') || process.argv[1]?.includes('index.js');
 
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down...');
-    server.close(() => process.exit(0));
-  });
+if (isMainModule) {
+  const start = async () => {
+    try {
+      await initDb();
+    } catch (error) {
+      console.error('Failed to initialize database connection', error);
+      process.exit(1);
+    }
+
+    const app = createApp();
+    const port = process.env.PORT || 3001;
+
+    const server = app.listen(port, () => {
+      console.log(`Server running on port ${port}`);
+    });
+
+    const shutdown = async (signal: string) => {
+      console.log(`${signal} received, shutting down...`);
+      server.close(async () => {
+        await shutdownDb().catch(() => {});
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', () => void shutdown('SIGTERM'));
+    process.on('SIGINT', () => void shutdown('SIGINT'));
+  };
+
+  void start();
 }
