@@ -3,8 +3,7 @@ import type { Express } from "express";
 import { initDb, checkDbHealth, shutdownDb } from "@repo/db";
 import { requestIdMiddleware, errorHandler } from "./middlewares/index.js";
 import { isRedisHealthy, initRedis } from "@repo/redis";
-
-console.log("API module loaded, starting initialization...");
+import authRouter from "./routes/auth.js";
 
 export function createApp(): Express {
   const app = express();
@@ -20,17 +19,18 @@ export function createApp(): Express {
 
   // Health check endpoint
   app.get("/health", async (_req, res) => {
-
-    const withTimeout:any = (promise : Promise<any>, ms: number) => {
-      Promise.race([promise, new Promise((_,reject)=>
-      setTimeout(() => reject(new Error("Timeout")), ms)
-    )])
-  };
-
-    const [db, redisHealthy]= await Promise.all([
+    const withTimeout: any = (promise: Promise<any>, ms: number) => {
+      Promise.race([
+        promise,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), ms)
+        ),
+      ]);
+    };
+    const [db, redisHealthy] = await Promise.all([
       withTimeout(checkDbHealth(), 5000),
-      withTimeout(isRedisHealthy(), 5000)
-    ])
+      withTimeout(isRedisHealthy(), 5000),
+    ]);
 
     if (!redisHealthy) {
       return res.status(503).json({ status: "degraded", redis: "unhealthy" });
@@ -44,6 +44,9 @@ export function createApp(): Express {
       .status(200)
       .json({ dbHealth: "healthy", db, redisHealth: "healthy", redisHealthy });
   });
+
+  // Routes
+  app.use("/auth", authRouter);
 
   // 3. Centralized error handler (must be last)
   app.use(errorHandler);
