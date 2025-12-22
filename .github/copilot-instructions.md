@@ -268,6 +268,7 @@ All Redis keys follow the pattern: `trading:<domain>:<entity>:<id>`
 | **WebSocket** | `trading:ws:connections:{walletAddress}` | List active connections |
 | **RateLimit** | `trading:ratelimit:wallet:{walletAddress}` | Rate limit per wallet |
 | **RateLimit** | `trading:ratelimit:api:{requestId}` | Rate limit per API request |
+| **Nonce** | `trading:nonce:{walletAddress}:{nonce}` | One-time signature nonce (10-minute expiry) |
 | **Trading** | `trading:trading:portfolio:{walletAddress}` | User's portfolio cache |
 | **Trading** | `trading:trading:position:{walletAddress}:{positionId}` | Individual position cache |
 | **Trading** | `trading:trading:positions:open:{walletAddress}` | List of open positions |

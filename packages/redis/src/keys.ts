@@ -48,6 +48,11 @@ const SESSION = {
   userTokens: (walletAddress: string) => `${APP}:session:tokens:${walletAddress}`,
 };
 
+// Nonce Domain (for wallet authentication)
+const NONCE = {
+  walletNonce: (walletAddress: string, nonce: string) => `${APP}:nonce:${walletAddress}:${nonce}`,
+};
+
 export const redisKeys = {
   PRICE,
   WEBSOCKET,
@@ -55,6 +60,7 @@ export const redisKeys = {
   TRADING,
   CACHE,
   SESSION,
+  NONCE,
 };
 
 /**

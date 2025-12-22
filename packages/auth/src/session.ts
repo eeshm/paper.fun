@@ -9,6 +9,7 @@ import { client as redis, redisKeys } from '@repo/redis';
  * @param userId - User ID from database
  * @returns Session token (opaque string to send to client)
  */
+
 export async function createSession(userId: number): Promise<string> {
   const db = getDb();
 
