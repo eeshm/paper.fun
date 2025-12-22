@@ -17,5 +17,9 @@
     "@types/node": "^22.15.3",
     "eslint": "^9.39.1",
     "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "@noble/ed25519": "^3.0.0",
+    "bs58": "^6.0.0"
   }
 }
