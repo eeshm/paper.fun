@@ -65,8 +65,8 @@ model Balances {
   user      Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   asset     String    @db.VarChar(20)
-  available Decimal   @db.Numeric(20, 8)
-  locked    Decimal   @db.Numeric(20, 8)
+  available Decimal   @db.Decimal(20, 8)
+  locked    Decimal   @db.Decimal(20, 8)
   
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -90,11 +90,11 @@ model Orders {
   type              String    @db.VarChar(20)
   baseAsset         String    @db.VarChar(20)
   quoteAsset        String    @db.VarChar(20)
-  requestedSize     Decimal   @db.Numeric(20, 8)
-  priceAtOrderTime  Decimal   @db.Numeric(20, 8)
+  requestedSize     Decimal   @db.Decimal(20, 8)
+  priceAtOrderTime  Decimal   @db.Decimal(20, 8)
   status            String    @db.VarChar(20)
   
-  feesApplied       Decimal   @db.Numeric(20, 8)  @default(0)  // Actual fees charged
+  feesApplied       Decimal   @db.Decimal(20, 8)  @default(0)  // Actual fees charged
   rejectionReason   String?   @db.VarChar(255)
   
   createdAt         DateTime  @default(now())
@@ -123,9 +123,9 @@ model Trades {
   user          Users     @relation(fields: [userId], references: [id], onDelete: Restrict)
   
   side          String    @db.VarChar(10)
-  executedPrice Decimal   @db.Numeric(20, 8)
-  executedSize  Decimal   @db.Numeric(20, 8)
-  fee           Decimal   @db.Numeric(20, 8)
+  executedPrice Decimal   @db.Decimal(20, 8)
+  executedSize  Decimal   @db.Decimal(20, 8)
+  fee           Decimal   @db.Decimal(20, 8)
   
   createdAt     DateTime  @default(now())
   
@@ -146,8 +146,8 @@ model Positions {
   user          Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   asset         String    @db.VarChar(20)
-  size          Decimal   @db.Numeric(20, 8)
-  avgEntryPrice Decimal   @db.Numeric(20, 8)
+  size          Decimal   @db.Decimal(20, 8)
+  avgEntryPrice Decimal   @db.Decimal(20, 8)
   
   updatedAt     DateTime  @updatedAt
   
