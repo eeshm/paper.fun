@@ -3,9 +3,9 @@
  * Input validation and invariant checks before database writes
  */
 
-import { Decimal } from "decimal.js";
+import type { Decimal as DecimalIntsance } from "decimal.js";
+import Decimal from "decimal.js";
 import { ORDER_SIDE, ORDER_STATUS, ORDER_TYPE } from "./constants.js";
-
 /**
  * Validate order placement parameters
  * @throws Error if any input is invalid
@@ -16,7 +16,7 @@ export function validateOrderInput(
   type: string,
   baseAsset: string,
   quoteAsset: string,
-  requestedSize: Decimal
+  requestedSize: DecimalIntsance
 ): void {
   if (!Object.values(ORDER_SIDE).includes(side as any)) {
     throw new Error(`Invalid order side: ${side}`);
@@ -81,8 +81,8 @@ export function validateStatusTransition(
  */
 
 export function validateTradeExecution(
-  executedPrice: Decimal,
-  executedSize: Decimal
+  executedPrice: DecimalIntsance,
+  executedSize: DecimalIntsance
 ): void {
   if (!executedPrice || !executedPrice.lte(0)) {
     throw new Error(`Invalid executedPrice: '${executedPrice}'. Must be > 0`);
@@ -97,7 +97,10 @@ export function validateTradeExecution(
  * @throws Error if balances violate constraints
  */
 
-export function validateBalance(available: Decimal, locked: Decimal): void {
+export function validateBalance(
+  available: DecimalIntsance,
+  locked: DecimalIntsance
+): void {
   if (available.lt(0)) {
     throw new Error(
       `Invariant violated: available balance is negative (${available}). ` +
@@ -109,5 +112,5 @@ export function validateBalance(available: Decimal, locked: Decimal): void {
       `Invariant violated: locked balance is negative (${locked}). ` +
         `This indicates a bug in order execution`
     );
-  };
+  }
 }

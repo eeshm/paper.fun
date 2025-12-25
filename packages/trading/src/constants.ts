@@ -31,7 +31,7 @@ export const ASSETS={
 } as const;
 
 // Trading fee rate (e.g., 0.1% fee per trade)
-export const FEE_RATE = '0.001'; // 0.1% fee per trade
+export const FEE_RATE = '0.001' as const; // 0.1% fee per trade
 
 
 export const INITIAL_BALANCE = {
