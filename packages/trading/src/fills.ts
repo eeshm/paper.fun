@@ -280,8 +280,9 @@ export async function rejectOrder(
       },
     });
 
-    // 2. Refund locked balance (only for buy orders)
+    // 2. Refund locked balance
     if (order.side === "buy") {
+      // BUY orders lock quote asset (USD) at placement
       const balance = await tx.balances.findUniqueOrThrow({
         where: {
           userId_asset: { userId: order.userId, asset: order.quoteAsset },
@@ -307,6 +308,11 @@ export async function rejectOrder(
           locked: newLocked.toString(),
         },
       });
+    } else if (order.side === "sell") {
+      // SELL orders: Currently no locking at placement
+      // (position is already held in Positions table)
+      // Nothing to refund—seller keeps their SOL
+      // This is a no-op, but explicit for clarity
     }
 });
 // TODO: Publish to Redis pub/sub for WebSocket broadcast
