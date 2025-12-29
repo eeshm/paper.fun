@@ -1,4 +1,5 @@
 import { getDb } from '@repo/db';
+import { initPortfolio } from '@repo/trading';
 
 /**
  * Create a new user or return existing user by wallet address
@@ -17,6 +18,14 @@ export async function createOrGetUser(walletAddress : string){
             create:{walletAddress},
             update:{ updatedAt : new Date()} //No fields to update, just return the existing user
         });
+
+        // check if portfolio exists, if not initialize
+        const existingBalances = await db.balances.findFirst({
+            where:{userId : user.id}
+        })
+        if(!existingBalances){
+            await initPortfolio(user.id);
+        }
 
         return user;
     }catch(error){

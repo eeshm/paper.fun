@@ -43,6 +43,7 @@
         "@noble/ed25519": "^3.0.0",
         "@repo/db": "*",
         "@repo/redis": "*",
+        "@repo/trading": "*",
         "bs58": "^6.0.0",
       },
       "devDependencies": {

@@ -21,6 +21,7 @@
   "dependencies": {
     "@repo/db": "*",
     "@repo/redis": "*",
+    "@repo/trading": "*",
     "@noble/ed25519": "^3.0.0",
     "bs58": "^6.0.0"
   }
