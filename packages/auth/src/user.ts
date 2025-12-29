@@ -15,7 +15,7 @@ export async function createOrGetUser(walletAddress : string){
         const user =  await db.users.upsert({
             where:{walletAddress},
             create:{walletAddress},
-            update:{} //No fields to update, just return the existing user
+            update:{ updatedAt : new Date()} //No fields to update, just return the existing user
         });
 
         return user;
