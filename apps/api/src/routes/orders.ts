@@ -4,7 +4,7 @@ import {
   placeOrderHandler,
   getOrderHandler,
   getUserOrdersHandler,
-} from "../controlllers/orders.ts"
+} from "../controllers/orders.ts"
 
 const router: Router = Router();
 

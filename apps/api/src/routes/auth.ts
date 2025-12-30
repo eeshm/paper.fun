@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { getNonce, login, logout } from '../controlllers/auth.js';
+import { getNonce, login, logout } from '../controllers/auth.js';
 import { authMiddleware } from '../middlewares/auth.js';
 
 
-const router :Router= Router();
+const router :Router = Router();
 
 /**
  * Public endpoints (no auth required)
