@@ -28,21 +28,43 @@ export async function setPrice(
   }
 
   if (!price.isFinite()) {
-    throw new Error(`Invalid price for ${upperSymbol}: ${price}. Must be finite`);
+    throw new Error(
+      `Invalid price for ${upperSymbol}: ${price}. Must be finite`
+    );
   }
 
   await redis
-  .multi()
-  .set(priceKey,price.toString())
-  .set(timestampKey,timestamp.toISOString())
-  .exec()
+    .multi()
+    .set(priceKey, price.toString())
+    .set(timestampKey, timestamp.toISOString())
+    .exec();
 }
-
 
 /**
  * Set multiple prices atomically (for batch updates)
- * 
+ *
  * @param prices Map of symbol → price
  * @param timestamp Server timestamp (same for all)
  */
 
+export async function setPrices(
+  prices: Record<string, Decimal>,
+  timestamp: Date = new Date()
+): Promise<void> {
+  const pipeline = redis.multi();
+
+  for (const [symbol, price] of Object.entries(prices)) {
+    const upperSymbol = symbol.toUpperCase();
+    const priceKey = redisKeys.PRICE.tokenPrice(upperSymbol);
+    const timestampKey = `${priceKey}:ts`;
+
+    
+    if (price.lte(0) || !price.isFinite()) {
+      throw new Error(`Invalid price for ${upperSymbol}: ${price}`);
+    }
+
+    pipeline.set(priceKey, price.toString());
+    pipeline.set(timestampKey, timestamp.toISOString());
+  }
+  await pipeline.exec();
+}
