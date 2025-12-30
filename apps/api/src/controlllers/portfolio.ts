@@ -44,13 +44,13 @@ export async function getPortfolioHandler(
       success: true,
       balances: portfolio.balances.map((b) => ({
         asset: b.asset,
-        available: b.available,
-        locked: b.locked,
+        available: b.available.toString(),
+        locked: b.locked.toString(),
       })),
       positions: portfolio.positions.map((p) => ({
         asset: p.asset,
-        size: p.size,
-        avgEntryPrice: p.avgEntryPrice,
+        size: p.size.toString(),
+        avgEntryPrice: p.avgEntryPrice.toString(),
       })),
       openOrders: portfolio.openOrders,
     });
