@@ -11,6 +11,6 @@ const router: Router =  Router();
  * Protected - requires auth
  */
 
-router.post("/",authMiddleware,getPortfolioHandler);
+router.get("/", authMiddleware, getPortfolioHandler);
 
 export default router;

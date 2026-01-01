@@ -8,6 +8,9 @@
   "dependencies": {
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
-    "tweetnacl": "^1.0.3"
+    "tweetnacl": "^1.0.3",
+    "@repo/db":"*",
+    "@repo/auth":"*",
+    "@repo/pricing":"*"
   }
 }

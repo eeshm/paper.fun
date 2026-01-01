@@ -29,7 +29,7 @@ export async function getPortfolioHandler(
   res: Response
 ): Promise<void> {
   try {
-    const userId = (req as any).userId; // From auth middlware
+    const userId = (req as any).userId; // From auth middleware
 
     const portfolio = await getPortfolio(userId);
 
@@ -38,21 +38,12 @@ export async function getPortfolioHandler(
         success: false,
         message: "No portfolio found",
       });
+      return;
     }
 
     res.status(200).json({
       success: true,
-      balances: portfolio.balances.map((b) => ({
-        asset: b.asset,
-        available: b.available.toString(),
-        locked: b.locked.toString(),
-      })),
-      positions: portfolio.positions.map((p) => ({
-        asset: p.asset,
-        size: p.size.toString(),
-        avgEntryPrice: p.avgEntryPrice.toString(),
-      })),
-      openOrders: portfolio.openOrders,
+      portfolio,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
