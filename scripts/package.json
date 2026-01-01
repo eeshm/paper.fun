@@ -2,15 +2,18 @@
   "name": "scripts",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "test-auth": "bun run test-auth.ts"
+    "test-auth": "bun run test-auth.ts",
+    "seed": "bun run seed-balances.ts",
+    "test-full": "bun run test-full-flow.ts"
   },
   "dependencies": {
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
     "tweetnacl": "^1.0.3",
-    "@repo/db":"*",
-    "@repo/auth":"*",
-    "@repo/pricing":"*"
+    "@repo/db": "*",
+    "@repo/auth": "*",
+    "@repo/pricing": "*"
   }
 }
