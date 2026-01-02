@@ -1,6 +1,11 @@
 /**
  * Trade Execution
  * Filling orders, executing trades, updating balances and positions
+ * 
+ * @deprecated This module is deprecated. Market orders now execute directly
+ *             in placeOrder() with no pending state (orders go straight to FILLED).
+ *             Kept for potential future limit order support where orders may
+ *             need a pending → filled workflow.
  */
 
 import { Decimal}  from "decimal.js";

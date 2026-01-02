@@ -42,6 +42,9 @@ export function validateOrderInput(
 /**
  * Validate order status state machine
  * Only allowed: pending → {filled, rejected}
+ * 
+ * @deprecated Market orders now execute directly in placeOrder() with no pending state.
+ *             Kept for potential future limit order support.
  * @throws Error if transition is invalid
  */
 
@@ -84,7 +87,7 @@ export function validateTradeExecution(
   executedPrice: DecimalIntsance,
   executedSize: DecimalIntsance
 ): void {
-  if (!executedPrice || !executedPrice.lte(0)) {
+  if (!executedPrice || executedPrice.lte(0)) {
     throw new Error(`Invalid executedPrice: '${executedPrice}'. Must be > 0`);
   }
   if (!executedSize || executedSize.lte(0)) {

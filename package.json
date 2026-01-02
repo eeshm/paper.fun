@@ -4,6 +4,9 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "dotenv turbo run dev",
+    "dev:api": "dotenv turbo run dev --filter=api",
+    "dev:worker": "dotenv turbo run dev --filter=price-ingestion-worker",
+    "dev:all": "dotenv turbo run dev --filter=api --filter=price-ingestion-worker --parallel",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
@@ -24,7 +27,8 @@
   "packageManager": "bun@1.3.2",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "workers/*"
   ],
   "dependencies": {
     "@prisma/client": "^6",

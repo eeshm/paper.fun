@@ -9,7 +9,6 @@ export { ORDER_STATUS, ORDER_SIDE, ORDER_TYPE, ASSETS, FEE_RATE, INITIAL_BALANCE
 // Validation
 export {
   validateOrderInput,
-  validateStatusTransition,
   validateTradeExecution,
   validateBalance,
 } from './validation.js';
@@ -20,11 +19,11 @@ export { calculateFee, validateFee } from './fees.js';
 // Positions
 export { initPosition, updatePosition } from './positions.js';
 
-// Orders
+// Orders (market orders execute immediately, no pending state)
 export { placeOrder, getOrder, getUserOrders } from './orders.js';
-
-// Fills (execution)
-export { fillOrder, rejectOrder } from './fills.js';
 
 // Portfolio
 export { initPortfolio, getPortfolio } from './portfolio.js';
+
+// NOTE: fills.ts is deprecated. Market orders now execute directly in placeOrder().
+// Kept for potential future limit order support.
