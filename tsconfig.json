@@ -18,9 +18,7 @@
   },
   "references": [
     { "path": "apps/api" },
-    { "path": "apps/web" },
     { "path": "apps/workers" },
-    { "path": "apps/ws" },
     { "path": "packages/auth" },
     { "path": "packages/config" },
     { "path": "packages/db" },
