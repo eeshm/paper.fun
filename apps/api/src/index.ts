@@ -75,10 +75,10 @@ if (isMainModule) {
       process.exit(1);
     }
 
-    // Seed development prices (skip in production)
-    if (process.env.NODE_ENV !== "production") {
-      await seedDevelopmentPrices();
-    }
+    // // Seed development prices (skip in production)
+    // if (process.env.NODE_ENV !== "production") {
+    //   await seedDevelopmentPrices();
+    // }
 
     const app = createApp();
     const port = process.env.PORT || 3001;

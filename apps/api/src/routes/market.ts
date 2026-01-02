@@ -1,12 +1,23 @@
 import { Router } from "express";
-import { getPriceHandler, getMarketStatusHandler } from "../controllers/market.js";
+import { getPriceHandler, getAllPricesHandler, getMarketStatusHandler } from "../controllers/market.js";
 
-const router :Router = Router();
+const router: Router = Router();
 
-// GET /market/price/:symbol
+/**
+ * Market Data Routes
+ * 
+ * GET /market/price/:symbol - Get price for a specific symbol (e.g., SOL)
+ * GET /market/prices        - Get prices for all supported symbols
+ * GET /market/status        - Get market data availability status
+ */
+
+// GET /market/price/:symbol - Single symbol price
 router.get("/price/:symbol", getPriceHandler);
 
-// GET /market/status
+// GET /market/prices - All prices
+router.get("/prices", getAllPricesHandler);
+
+// GET /market/status - Market health status
 router.get("/status", getMarketStatusHandler);
 
 export default router;
