@@ -6,7 +6,7 @@ import { types } from "util";
 import type { WebSocket } from "ws";
 
 export interface AuthenticatedWebSocket extends WebSocket {
-    userId:string;
+    userId:number;
     walletAddress:string;
     isAlive:boolean;
     subscriptions:Set<string>;
