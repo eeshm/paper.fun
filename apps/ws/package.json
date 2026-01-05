@@ -13,7 +13,8 @@
     "@repo/redis": "*",
     "@repo/db": "*",
     "@repo/auth": "*",
-    "@repo/pricing": "*"
+    "@repo/pricing": "*",
+    "@repo/events": "*"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",

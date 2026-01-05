@@ -44,6 +44,7 @@
       "dependencies": {
         "@repo/auth": "*",
         "@repo/db": "*",
+        "@repo/events": "*",
         "@repo/pricing": "*",
         "@repo/redis": "*",
         "ws": "^8.14.2",
