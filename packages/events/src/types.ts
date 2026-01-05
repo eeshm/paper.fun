@@ -18,7 +18,7 @@ export interface OrderFilledEvent {
   quoteAsset: string;
   executedPrice: string; // Decimal string
   executedSize: string; // Decimal string
-  fees: string; // Decimal string
+  fee: string; // Decimal string
   timestamp: string;
 }
 
