@@ -1,19 +1,22 @@
-/**
+5; /**
  * WebSocket Server Setup
- * 
+ *
  * Creates the server and configures heartbeat for dead connection detection.
  */
 
 import { WebSocketServer } from "ws";
 import type { AuthenticatedWebSocket } from "./types.js";
 import { handleConnection } from "./handlers/index.js";
-import { startPricePublisher, startOrderPublisher } from "./publishers/index.js";
+import {
+  startPricePublisher,
+  startOrderPublisher,
+} from "./publishers/index.js";
 
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
 /**
  * Create and configure WebSocket server
- * 
+ *
  * TODO:
  * 1. Create WebSocketServer on specified port
  * 2. Set up "connection" event handler -> call handleConnection
@@ -23,27 +26,44 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
  *    - Else: set isAlive = false, call ws.ping()
  * 4. Set up "close" event to clearInterval on server shutdown
  * 5. Return wss
- * 
+ *
  * @param port Port to listen on
  * @returns WebSocketServer instance
  */
+
+
+/**
+ * Create and configure WebSocket server
+ */
 export function createWebSocketServer(port: number): WebSocketServer {
-  // TODO: Implement
-  console.log("[WS] Create server called (not implemented)");
-  throw new Error("Not implemented");
+  const wss = new WebSocketServer({ port });
+
+  wss.on("connection", (ws) => {
+    handleConnection(ws as AuthenticatedWebSocket);
+  });
+
+  // Start heartbeat to detect dead connections
+  const heartbeat = setInterval(() => {
+    wss.clients.forEach((client) => {
+      const ws = client as AuthenticatedWebSocket;
+      if (!ws.isAlive) {
+        console.log("[WS] Terminating dead connections");
+        return ws.terminate();
+      }
+      ws.isAlive = false;
+      ws.ping();
+    }, HEARTBEAT_INTERVAL);
+
+    wss.on("close", () => {
+      clearInterval(heartbeat);
+    });
+  });
+  return wss;
 }
 
 /**
  * Start all Redis subscribers (publishers)
- * 
- * TODO:
- * 1. Call startPricePublisher(wss)
- * 2. Call startOrderPublisher(wss)
- * 3. Use Promise.all to run concurrently
- * 
- * @param wss WebSocketServer instance
  */
 export async function startPublishers(wss: WebSocketServer): Promise<void> {
-  // TODO: Implement
-  console.log("[WS] Start publishers called (not implemented)");
+  await Promise.all([startOrderPublisher(wss), startPricePublisher(wss)]);
 }
