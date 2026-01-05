@@ -1,17 +1,18 @@
 /**
  * WebSocket Server Entry Point
- * 
+ *
  * Main startup file: initialize Redis, create server, start publishers.
  */
 
 import { initRedis, isRedisHealthy } from "@repo/redis";
 import { createWebSocketServer, startPublishers } from "./server.js";
+import { error } from "console";
 
 const WS_PORT = parseInt(process.env.WS_PORT || "3001", 10);
 
 /**
  * Main startup function
- * 
+ *
  * TODO:
  * 1. Log startup message
  * 2. Call initRedis() and check isRedisHealthy()
@@ -26,8 +27,40 @@ const WS_PORT = parseInt(process.env.WS_PORT || "3001", 10);
  * 9. Catch fatal errors and exit
  */
 async function main() {
-  // TODO: Implement
-  console.log("[WS] Main function called (not implemented)");
+  console.log("[WS] Starting WebSocket Server...");
+
+  // Initializer Redis
+  try {
+    await initRedis();
+    const health = isRedisHealthy();
+    if (!health) {
+      throw new Error("Redis health check failed");
+    }
+    console.log("[WS] Redis connected");
+  } catch (error) {
+    console.error("[WS] Failed to connect to Redis:", error);
+    process.exit(1);
+  }
+
+  const wss = createWebSocketServer(WS_PORT);
+  console.log(`[WS] WebSocket server listening on port ${WS_PORT}`);
+
+  await startPublishers(wss);
+  console.log("[WS] Publishers started");
+
+  console.log("[WS] Ready for connections");
+
+  process.on("SIGINT",()=>{
+    console.log("[WS] Shutting down...");
+    wss.close(()=>{
+      process.exit(0);
+    })
+  })
+
+  process.on("SIGTERM",()=>{
+    console.log("[WS] Fatal error: ",error);
+    process.exit(1);
+  })
 }
 
 // Start worker
