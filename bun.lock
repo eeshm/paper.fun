@@ -22,6 +22,7 @@
       "dependencies": {
         "@repo/auth": "*",
         "@repo/db": "*",
+        "@repo/events": "*",
         "@repo/pricing": "*",
         "@repo/redis": "*",
         "@repo/trading": "*",
@@ -230,6 +231,7 @@
       "name": "price-ingestion-worker",
       "version": "0.1.0",
       "dependencies": {
+        "@repo/events": "*",
         "@repo/pricing": "*",
         "@repo/redis": "*",
         "decimal.js": "^10.4.3",

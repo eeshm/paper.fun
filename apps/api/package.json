@@ -15,7 +15,8 @@
     "@repo/db": "*",
     "@repo/redis": "*",
     "@repo/trading": "*",
-    "@repo/pricing":"*",
+    "@repo/pricing": "*",
+    "@repo/events": "*",
     "@types/express": "^5.0.6",
     "express": "^5.2.1",
     "uuid": "^13.0.0"

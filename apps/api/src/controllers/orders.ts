@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import { Decimal } from "decimal.js";
-import { placeOrder, getOrder, getUserOrders } from "@repo/trading";
+import { placeOrder, getOrder, getUserOrders, getPortfolio } from "@repo/trading";
 import { getPrice } from "@repo/pricing";
+import { publishOrderFilled, publishPortfolioUpdate } from "@repo/events";
 
 /**
  * POST /orders
@@ -60,6 +61,34 @@ export async function placeOrderHandler(req: Request, res: Response) {
       size,
       price  // Execution price (market price at this moment)
     );
+
+    // Publish order filled event for WebSocket broadcast
+    await publishOrderFilled({
+      userId,
+      orderId: result.orderId,
+      side,
+      baseAsset,
+      quoteAsset,
+      executedSize: result.executedSize,
+      executedPrice: result.executedPrice,
+      fee: result.feesApplied,
+    });
+
+    // Publish portfolio update for WebSocket broadcast
+    const portfolio = await getPortfolio(userId);
+    await publishPortfolioUpdate({
+      userId,
+      balances: portfolio.balances.map((b) => ({
+        asset: b.asset,
+        available: b.available,
+        locked: b.locked,
+      })),
+      positions: portfolio.positions.map((p) => ({
+        asset: p.asset,
+        size: p.size,
+        avgEntryPrice: p.avgEntryPrice,
+      })),
+    });
 
     res.status(201).json({
       success: true,

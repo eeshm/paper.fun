@@ -40,7 +40,6 @@ export interface PortfolioUpdateEvent {
     asset: string;
     size: string; // Decimal string
     avgEntryPrice: string; // Decimal string
-    unrealizedPnl: string; // Decimal string
   }[];
   timestamp: string;
 }

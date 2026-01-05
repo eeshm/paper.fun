@@ -11,6 +11,7 @@
   "dependencies": {
     "@repo/redis": "*",
     "@repo/pricing": "*",
+    "@repo/events": "*",
     "decimal.js": "^10.4.3"
   },
   "devDependencies": {
