@@ -17,7 +17,7 @@ router.use(authMiddleware);
  */
 
 router.post("/",orderRateLimiter,placeOrderHandler)
-
+\
 /**
  * GET /orders/:orderId
  * Get single order by ID (protected)
