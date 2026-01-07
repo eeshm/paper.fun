@@ -1,15 +1,18 @@
 import { Router } from "express";
 import { getNonce, login, logout } from "../controllers/auth.ts";
 import { authMiddleware } from "../middlewares/auth.ts";
-import { authRateLimiter } from "../middlewares/rateLimit.ts";
+import { authRateLimiter, validateQuery,validateBody } from "../middlewares/index.ts";
+import { getNonceSchema, loginSchema } from "../schemas/index.ts";
 
 const router: Router = Router();
 /**
  * Public endpoints (no auth required)
  */
 router.use(authRateLimiter);
-router.post("/nonce", getNonce);
-router.post("/login", login);
+
+router.post("/nonce", validateQuery(getNonceSchema), getNonce);
+
+router.post("/login", validateBody(loginSchema), login);
 /**
  * Protected endpoints (auth required)
  */

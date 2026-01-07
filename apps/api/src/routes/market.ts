@@ -1,24 +1,29 @@
 import { Router } from "express";
-import { getPriceHandler, getAllPricesHandler, getMarketStatusHandler } from "../controllers/market.ts";
-import { publicRateLimiter } from "../middlewares/rateLimit.ts";
+import {
+  getPriceHandler,
+  getAllPricesHandler,
+  getMarketStatusHandler,
+} from "../controllers/market.ts";
+import { publicRateLimiter, validateParams } from "../middlewares/index.ts";
+import { getPriceParamsSchema } from "../schemas/index.ts";
+
 
 const router: Router = Router();
-
 
 router.use(publicRateLimiter);
 /**
  * Market Data Routes
- * 
+ *
  * GET /market/price/:symbol - Get price for a specific symbol (e.g., SOL)
  * GET /market/prices        - Get prices for all supported symbols
  * GET /market/status        - Get market data availability status
  */
 
 // GET /market/price/:symbol - Single symbol price
-router.get("/price/:symbol", getPriceHandler);
+router.get("/price/:symbol", validateParams(getPriceParamsSchema), getPriceHandler);
 
 // GET /market/prices - All prices
-router.get("/prices", getAllPricesHandler); 
+router.get("/prices", getAllPricesHandler);
 
 // GET /market/status - Market health status
 router.get("/status", getMarketStatusHandler);

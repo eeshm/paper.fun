@@ -8,4 +8,11 @@ export {
   readRateLimiter,
   publicRateLimiter,
   strictRateLimiter,
-} from "./rateLimit.js";
+} from "./rateLimit.ts";
+
+export {
+  validate,
+  validateBody,
+  validateParams,
+  validateQuery,
+} from "./validate.ts";

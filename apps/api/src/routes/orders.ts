@@ -4,9 +4,21 @@ import {
   placeOrderHandler,
   getOrderHandler,
   getUserOrdersHandler,
-} from "../controllers/orders.ts"
-import { orderRateLimiter, readRateLimiter } from "../middlewares/index.js";
+} from "../controllers/orders.ts";
+import {
+  orderRateLimiter,
+  readRateLimiter,
+  validateBody,
+  validateParams,
+  validateQuery,
+} from "../middlewares/index.ts";
+import {
+  placeOrderSchema,
+  getOrderParamsSchema,
+  listOrdersQuerySchema,
+} from "../schemas/index.ts";
 
+import { fr } from "zod/locales";
 
 const router: Router = Router();
 router.use(authMiddleware);
@@ -16,22 +28,35 @@ router.use(authMiddleware);
  * Place a new order (protected - requires auth)
  */
 
-router.post("/",orderRateLimiter,placeOrderHandler)
-\
+router.post(
+  "/",
+  orderRateLimiter,
+  validateBody(placeOrderSchema),
+  placeOrderHandler
+);
+
 /**
  * GET /orders/:orderId
  * Get single order by ID (protected)
  */
 
-router.post('/:orderId',readRateLimiter,getOrderHandler);
-
+router.post(
+  "/:orderId",
+  readRateLimiter,
+  validateParams(getOrderParamsSchema),
+  getOrderHandler
+);
 
 /**
  * GET /orders
  * List user's orders (protected)
  */
 
-router.get('/',readRateLimiter,getUserOrdersHandler);
-
+router.get(
+  "/",
+  readRateLimiter,
+  validateQuery(listOrdersQuerySchema),
+  getUserOrdersHandler
+);
 
 export default router;

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.ts";
 import { getPortfolioHandler } from "../controllers/portfolio.ts";
-import { readRateLimiter } from "../middlewares/rateLimit.ts";
+import { readRateLimiter, validateQuery } from "../middlewares/index.ts";
 
 const router: Router = Router();
 router.use(authMiddleware);

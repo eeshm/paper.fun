@@ -11,7 +11,7 @@ export {
   assetSchema,
   orderSideSchema,
   symbolSchema,
-} from "./common.js";
+} from "./common.ts";
 
 // Auth
 export {
@@ -19,7 +19,7 @@ export {
   loginSchema,
   type GetNonceInput,
   type LoginInput,
-} from "./auth.js";
+} from "./auth.ts";
 
 // Orders
 export {
@@ -35,4 +35,4 @@ export {
 export {
   getPriceParamsSchema,
   type GetPriceParams,
-} from "./market.js";
+} from "./market.ts";
