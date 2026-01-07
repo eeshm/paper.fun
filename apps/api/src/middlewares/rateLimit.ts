@@ -90,3 +90,78 @@ function getClientIp(req:Request):string{
 function getUserId(req:Request):string{ 
     return (req as any).userId.toString();
 }
+
+/**
+ * Extract wallet address from request body or auth
+ */
+function getWalletAddress(req:Request){
+    return req.body?.walletAddress || (req as any).walletAddress || "unknown";
+}
+
+// ============================================
+// Pre-configured Rate Limiters
+// ============================================
+
+/**
+ * Auth endpoints: 10 requests per minute per IP
+ * Protects against brute force attacks
+ */
+export const authRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,  // 1 minute
+  maxRequests: 10,
+  keyPrefix: "auth",
+  keyGenerator: getClientIp,
+  message: "Too many authentication attempts, please try again in a minute",
+});
+
+/**
+ * Order endpoints: 30 requests per minute per user
+ * Prevents order spam
+ */
+export const orderRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,  // 1 minute
+  maxRequests: 30,
+  keyPrefix: "orders",
+  keyGenerator: getUserId,
+  message: "Too many orders, please slow down",
+});
+
+/**
+ * Read endpoints: 100 requests per minute per user
+ * More lenient for read operations
+ */
+export const readRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,  // 1 minute
+  maxRequests: 100,
+  keyPrefix: "read",
+  keyGenerator: getUserId,
+  message: "Too many requests, please try again later",
+});
+
+/**
+ * Public endpoints: 60 requests per minute per IP
+ * Market data, health checks
+ */
+export const publicRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,  // 1 minute
+  maxRequests: 60,
+  keyPrefix: "public",
+  keyGenerator: getClientIp,
+  message: "Too many requests, please try again later",
+});
+
+/**
+ * Strict limiter for sensitive operations: 5 per minute
+ * Password reset, wallet linking, etc.
+ */
+export const strictRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,  // 1 minute
+  maxRequests: 5,
+  keyPrefix: "strict",
+  keyGenerator: getClientIp,
+  message: "Rate limit exceeded for sensitive operation",
+});
+
+
+
+
