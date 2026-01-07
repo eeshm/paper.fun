@@ -15,3 +15,60 @@ interface RateLimitConfig {
   keyGenerator: (req: Request) => string; // Generate unique key per client
   message?: string; // Custom error message
 }
+
+export function createRateLimiter(config:RateLimitConfig){
+
+    const {
+        windowMs,
+        maxRequests,
+        keyPrefix,
+        keyGenerator,
+        message = "Too many requests, please try again later."
+    } = config;
+
+    return async(req:Request,res:Response,next: NextFunction) => {
+        try{
+            const clientKey = keyGenerator(req);
+            const redisKey = `${redisKeys.RATELIMIT.apiRequests(keyPrefix)}:${clientKey}`;
+            const now = Date.now();
+            const windowStart = now - windowMs;
+
+            // Use Redis transaction for atomicity
+            const multi = redis.multi();
+
+            // Remove old entries outside the time window
+            multi.zRemRangeByScore(redisKey,0,windowStart);
+
+            // Count requests in current window
+            multi.zCard(redisKey);
+
+            // Add current request timestamp
+            multi.zAdd(redisKey,{score:now, value: `${now}:${Math.random()}`});
+
+            // Set expiration for the key
+            multi.expire(redisKey,Math.ceil(windowMs/1000)+1);
+
+            const results = await multi.exec();
+            const requestCount =  results[1] as number;
+
+            res.setHeader("x-RateLimit-Limit", maxRequests);
+            res.setHeader("x-RateLimit-Remaining", Math.max(0, maxRequests - requestCount - 1));
+            res.setHeader("x-RateLimit-Reset", Math.ceil((now+ windowMs)/1000));
+
+            if(requestCount > maxRequests){
+                res.status(429).json({
+                    success: false,
+                    error: message,
+                    code: "RATE_LIMIT_EXCEEDED",
+                    retryAfter: Math.ceil(windowMs/1000)
+                });
+                return;
+            }
+            next();
+        }catch(error){
+            // On redis error, allow request (faild open) but log
+            console.error("[RATE_LIMIT]Rate limiter error:", error);
+            next();
+        }
+    }
+}
