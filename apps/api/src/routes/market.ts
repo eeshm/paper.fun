@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { getPriceHandler, getAllPricesHandler, getMarketStatusHandler } from "../controllers/market.ts";
+import { publicRateLimiter } from "../middlewares/rateLimit.ts";
 
 const router: Router = Router();
 
+
+router.use(publicRateLimiter);
 /**
  * Market Data Routes
  * 

@@ -1,9 +1,10 @@
-import { Router } from 'express';
-import { authMiddleware } from '../middlewares/auth.ts';
-import { getPortfolioHandler } from '../controllers/portfolio.ts';
+import { Router } from "express";
+import { authMiddleware } from "../middlewares/auth.ts";
+import { getPortfolioHandler } from "../controllers/portfolio.ts";
+import { readRateLimiter } from "../middlewares/rateLimit.ts";
 
-
-const router: Router =  Router();
+const router: Router = Router();
+router.use(authMiddleware);
 
 /**
  * GET /portfolio
@@ -11,6 +12,6 @@ const router: Router =  Router();
  * Protected - requires auth
  */
 
-router.get("/", authMiddleware, getPortfolioHandler);
+router.get("/", readRateLimiter, getPortfolioHandler);
 
 export default router;

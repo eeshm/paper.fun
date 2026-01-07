@@ -5,22 +5,25 @@ import {
   getOrderHandler,
   getUserOrdersHandler,
 } from "../controllers/orders.ts"
+import { orderRateLimiter, readRateLimiter } from "../middlewares/index.js";
+
 
 const router: Router = Router();
+router.use(authMiddleware);
 
 /**
  * POST /orders
  * Place a new order (protected - requires auth)
  */
 
-router.post("/",authMiddleware,placeOrderHandler)
+router.post("/",orderRateLimiter,placeOrderHandler)
 
 /**
  * GET /orders/:orderId
  * Get single order by ID (protected)
  */
 
-router.post('/:orderId',authMiddleware,getOrderHandler);
+router.post('/:orderId',readRateLimiter,getOrderHandler);
 
 
 /**
@@ -28,7 +31,7 @@ router.post('/:orderId',authMiddleware,getOrderHandler);
  * List user's orders (protected)
  */
 
-router.get('/',authMiddleware,getUserOrdersHandler);
+router.get('/',readRateLimiter,getUserOrdersHandler);
 
 
 export default router;
