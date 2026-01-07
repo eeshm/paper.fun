@@ -16,3 +16,7 @@ export {
   validateParams,
   validateQuery,
 } from "./validate.ts";
+
+export {
+  applySecurity,
+} from "./security.ts";

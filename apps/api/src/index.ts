@@ -7,12 +7,16 @@ import authRouter from "./routes/auth.ts";
 import orderRouter from "./routes/orders.ts";
 import portfolioRouter from "./routes/portfolio.ts";
 import marketRouter from "./routes/market.ts";
+import { applySecurity } from "./middlewares/index.ts";
 import { seedDevelopmentPrices } from "@repo/pricing";
 
 export function createApp(): Express {
   const app = express();
 
   // Essential Middleware
+
+  // 0. Security headers -- Must be first
+  applySecurity(app);
 
   // 1. JSON body parsing
   app.use(express.json());

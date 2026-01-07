@@ -144,3 +144,9 @@ function getAllowedOrigins(): string[] {
       ];
   }
 }
+
+
+export function applySecurity(app: Express): void {
+  configureHelmet(app);
+  configureCORS(app);
+}
