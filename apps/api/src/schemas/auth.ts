@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { walletAddressSchema } from "./common.js";
+import { walletAddressSchema } from "./common.ts";
 
 /**
  * GET /auth/nonce query params

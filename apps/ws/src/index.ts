@@ -6,7 +6,6 @@
 
 import { initRedis, isRedisHealthy } from "@repo/redis";
 import { createWebSocketServer, startPublishers } from "./server.js";
-import { error } from "console";
 
 const WS_PORT = parseInt(process.env.WS_PORT || "3001", 10);
 

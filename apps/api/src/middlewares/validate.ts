@@ -6,7 +6,7 @@
  */
 
 import type { Request, Response, NextFunction } from "express";
-import { z, ZodError, ZodSchema } from "zod";
+import { z, ZodError,  type ZodSchema } from "zod";
 
 interface ValidationSchemas {
   body?: ZodSchema;

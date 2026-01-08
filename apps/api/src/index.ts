@@ -85,7 +85,7 @@ if (isMainModule) {
     // }
 
     const app = createApp();
-    const port = process.env.PORT || 3001;
+    const port = process.env.API_PORT || 3000;
 
     const server = app.listen(port, () => {
       console.log(`Server running on port ${port}`);
