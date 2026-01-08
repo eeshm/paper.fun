@@ -29,11 +29,17 @@ export function validate(schemas: ValidationSchemas) {
       }
       // Validate params
       if (schemas.params) {
-        req.params = await schemas.params.parseAsync(req.params) as Record<string, string>;
+        const validatedParams = await schemas.params.parseAsync(req.params);
+        Object.assign(req.params, validatedParams);
       }
       // Validate query
       if (schemas.query) {
-        req.query = await schemas.query.parseAsync(req.query) as Record<string, string | string[]>;
+        const validatedQuery = await schemas.query.parseAsync(req.query);
+        // Note: Don't reassign req.query as it may be read-only in some Express setups
+        // The validation is enough - parsedAsync throws on invalid data
+        for (const key of Object.keys(validatedQuery as object)) {
+          (req.query as Record<string, unknown>)[key] = (validatedQuery as Record<string, unknown>)[key];
+        }
       }
       next();
     } catch (error) {

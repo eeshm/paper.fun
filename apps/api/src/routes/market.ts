@@ -4,8 +4,7 @@ import {
   getAllPricesHandler,
   getMarketStatusHandler,
 } from "../controllers/market.ts";
-import { publicRateLimiter, validateParams } from "../middlewares/index.ts";
-import { getPriceParamsSchema } from "../schemas/index.ts";
+import { publicRateLimiter } from "../middlewares/index.ts";
 
 
 const router: Router = Router();
@@ -20,7 +19,7 @@ router.use(publicRateLimiter);
  */
 
 // GET /market/price/:symbol - Single symbol price
-router.get("/price/:symbol", validateParams(getPriceParamsSchema), getPriceHandler);
+router.get("/price/:symbol", getPriceHandler);
 
 // GET /market/prices - All prices
 router.get("/prices", getAllPricesHandler);

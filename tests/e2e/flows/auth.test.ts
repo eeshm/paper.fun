@@ -30,7 +30,6 @@ describe("Auth Flow (E2E)", () => {
     test("returns nonce for valid wallet address", async () => {
       const res = await api
         .post("/auth/nonce")
-        .query({ walletAddress: wallet.publicKey })
         .send({ walletAddress: wallet.publicKey });
 
       expect(res.status).toBe(200);

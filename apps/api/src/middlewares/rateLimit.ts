@@ -27,6 +27,11 @@ export function createRateLimiter(config:RateLimitConfig){
     } = config;
 
     return async(req:Request,res:Response,next: NextFunction) => {
+        // Skip rate limiting in test environment
+        if (process.env.NODE_ENV === "test") {
+            return next();
+        }
+
         try{
             const clientKey = keyGenerator(req);
             const redisKey = `${redisKeys.RATELIMIT.apiRequests(keyPrefix)}:${clientKey}`;

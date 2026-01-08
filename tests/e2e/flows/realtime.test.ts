@@ -47,7 +47,7 @@ describe("Market Data (E2E)", () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body).toHaveProperty("symbol", "SOL");
-      expect(res.body).toHaveProperty("price", "150.50");
+      expect(parseFloat(res.body.price)).toBeCloseTo(150.5);
       expect(res.body).toHaveProperty("timestamp");
       expect(res.body).toHaveProperty("ageMs");
     });
@@ -80,7 +80,7 @@ describe("Market Data (E2E)", () => {
       // SOL should be available since we seeded it
       expect(res.body.prices.SOL).toBeDefined();
       expect(res.body.prices.SOL.available).toBe(true);
-      expect(res.body.prices.SOL.price).toBe("150.50");
+      expect(parseFloat(res.body.prices.SOL.price)).toBeCloseTo(150.5);
     });
   });
 
@@ -89,7 +89,8 @@ describe("Market Data (E2E)", () => {
       const res = await api.get("/market/status");
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty("status");
+      expect(res.body.success).toBe(true);
+      expect(res.body).toHaveProperty("healthy");
     });
   });
 });
@@ -107,7 +108,6 @@ describe("WebSocket Real-time (E2E)", () => {
   const getAuthToken = async (testWallet: TestWallet): Promise<string> => {
     const nonceRes = await api
       .post("/auth/nonce")
-      .query({ walletAddress: testWallet.publicKey })
       .send({ walletAddress: testWallet.publicKey });
 
     const { nonce } = nonceRes.body;

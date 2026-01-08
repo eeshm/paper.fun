@@ -10,7 +10,6 @@ export const authenticateWallet = async (
 ): Promise<string> => {
   const nonceRes = await api
     .post("/auth/nonce")
-    .query({ walletAddress: wallet.publicKey })
     .send({ walletAddress: wallet.publicKey });
 
   if (nonceRes.status !== 200) {

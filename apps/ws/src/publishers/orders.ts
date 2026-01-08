@@ -18,6 +18,7 @@ export async function startOrderPublisher(wss: WebSocketServer): Promise<void> {
   const subscriber = redis.duplicate();
   await subscriber.connect();
 
+  // Subscribe to order filled events
   await subscriber.subscribe(redisKeys.CHANNELS.orderFilled(), (message) => {
     try {
       const event: OrderFilledEvent = JSON.parse(message);
@@ -27,6 +28,7 @@ export async function startOrderPublisher(wss: WebSocketServer): Promise<void> {
     }
   });
 
+  // Subscribe to portfolio updates
   await subscriber.subscribe(
     redisKeys.CHANNELS.portfolioUpdate(),
     (message) => {
@@ -34,10 +36,11 @@ export async function startOrderPublisher(wss: WebSocketServer): Promise<void> {
         const event = JSON.parse(message) as PortfolioUpdateEvent;
         broadcastPortfolioUpdate(wss, event);
       } catch (error) {
-        console.error("[WS] Failed to parse portfolio update event");
+        console.error("[WS] Failed to parse portfolio update event:", error);
       }
     }
   );
+  
   console.log("[WS] Order publisher started");
 }
 function broadcastOrderFilled(
