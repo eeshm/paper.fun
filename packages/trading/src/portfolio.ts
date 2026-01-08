@@ -42,18 +42,23 @@ interface Portfolio {
 export async function initPortfolio(userId: number): Promise<void> {
   const db = getDb();
 
-  // Check if portfolio already initialized (idempotency)
-  const existing = await db.balances.findFirst({
-    where: { userId },
-  });
-  
-  if (existing) {
-    console.log(`Portfolio already initialized for user ${userId}`);
-    return;
-  }
-
-  // Atomic transaction: All balances + position created together
+  // Atomic transaction with advisory lock to prevent race conditions
+  // during concurrent user creation
   await db.$transaction(async (tx) => {
+    // Use advisory lock to serialize portfolio initialization per user
+    // This prevents race conditions when two logins happen concurrently
+    // Cast to integer to avoid void return type issue with Prisma
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(${userId}::bigint)::text`;
+
+    // Check if portfolio already initialized (inside transaction)
+    const existing = await tx.balances.findFirst({
+      where: { userId },
+    });
+    
+    if (existing) {
+      console.log(`Portfolio already initialized for user ${userId}`);
+      return;
+    }
     // Create initial balances for all assets
     for (const [asset, initialBalance] of Object.entries(INITIAL_BALANCE)) {
       // Validate balance is valid Decimal-compatible value (string or number)

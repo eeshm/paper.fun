@@ -344,8 +344,7 @@ describe("Failure Handling (E2E)", () => {
       expect(res.body.code).toBe("INSUFFICIENT_BALANCE");
     });
 
-    // TODO: Investigate timing issue - sell fails even with 50ms delay after buy
-    test.skip("handles selling all held asset", async () => {
+    test("handles selling all held asset", async () => {
       const wallet = createTestWallet();
       const token = await authenticate(wallet);
       await setTestPrice("SOL", "100");

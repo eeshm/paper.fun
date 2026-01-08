@@ -58,23 +58,74 @@ export async function placeOrder(
   const db = getDb();
 
   // ATOMIC TRANSACTION: Create order + execute trade all at once
+  // Use row-level locking (FOR UPDATE) to prevent double-spend
   const result = await db.$transaction(async (tx) => {
-    // SELECT ... FOR UPDATE: locks balance row until transaction ends
-    const balance = await tx.balances.findUniqueOrThrow({
-      where: { userId_asset: { userId, asset: quoteAsset } },
-    });
+    // Lock BOTH balance rows upfront to ensure consistent ordering and prevent deadlocks
+    // For BUY: need to check USDC (quote), update both USDC and SOL (base)
+    // For SELL: need to check SOL (base), update both SOL and USDC
+    
+    // Lock quote asset (USDC) balance
+    const quoteBalanceRows = await tx.$queryRaw<Array<{ id: number; available: string; locked: string }>>`
+      SELECT id, available::text, locked::text 
+      FROM balances 
+      WHERE "userId" = ${userId} AND asset = ${quoteAsset}
+      FOR UPDATE
+    `;
 
-    const available = new Decimal(balance.available);
-    const locked = new Decimal(balance.locked);
+    if (!quoteBalanceRows || quoteBalanceRows.length === 0) {
+      throw new Error(`No ${quoteAsset} balance found for user ${userId}`);
+    }
 
-    // Check: sufficient balance for cost + fee
-    const totalNeeded = cost.plus(fee);
-    if (available.lt(totalNeeded)) {
-      throw new Error(
-        `Insufficient balance. Need ${totalNeeded.toString()} ${quoteAsset} ` +
-          `(cost: ${cost.toString()} + fee: ${fee.toString()}), ` +
-          `but have ${available.toString()}`
-      );
+    const quoteBalance = quoteBalanceRows[0]!;
+    const quoteAvailable = new Decimal(quoteBalance.available);
+    const quoteLocked = new Decimal(quoteBalance.locked);
+
+    // Lock base asset (SOL) balance
+    const baseBalanceRows = await tx.$queryRaw<Array<{ id: number; available: string; locked: string }>>`
+      SELECT id, available::text, locked::text 
+      FROM balances 
+      WHERE "userId" = ${userId} AND asset = ${baseAsset}
+      FOR UPDATE
+    `;
+
+    let baseAvailable: Decimal;
+    let baseLocked: Decimal;
+
+    if (baseBalanceRows.length === 0) {
+      // Initialize base asset balance if not exists (needed for first buy)
+      await tx.balances.create({
+        data: {
+          userId,
+          asset: baseAsset,
+          available: "0",
+          locked: "0",
+        },
+      });
+      baseAvailable = new Decimal(0);
+      baseLocked = new Decimal(0);
+    } else {
+      baseAvailable = new Decimal(baseBalanceRows[0]?.available!);
+      baseLocked = new Decimal(baseBalanceRows[0]?.locked!);
+    }
+
+    // Validate balance BEFORE any updates
+    if (side === "buy") {
+      // BUY: Check USDC balance for cost + fee
+      const totalNeeded = cost.plus(fee);
+      if (quoteAvailable.lt(totalNeeded)) {
+        throw new Error(
+          `Insufficient balance. Need ${totalNeeded.toString()} ${quoteAsset} ` +
+            `(cost: ${cost.toString()} + fee: ${fee.toString()}), ` +
+            `but have ${quoteAvailable.toString()}`
+        );
+      }
+    } else {
+      // SELL: Check SOL balance for sell amount
+      if (baseAvailable.lt(size)) {
+        throw new Error(
+          `Insufficient ${baseAsset} to sell. Have ${baseAvailable.toString()}, need ${size.toString()}`
+        );
+      }
     }
 
     // 1. Create order with FILLED status (market orders execute immediately)
@@ -104,83 +155,52 @@ export async function placeOrder(
       },
     });
 
-    // 3. Update quote asset balance (always updated for all order types)
+    // 3. Update balances
     if (side === "buy") {
-      // BUY: Deduct cost + fee from available
-      const newAvailable = available.minus(cost).minus(fee);
+      // BUY: Deduct cost + fee from USDC, add SOL
+      const newQuoteAvailable = quoteAvailable.minus(cost).minus(fee);
       await tx.balances.update({
         where: {
           userId_asset: { userId, asset: quoteAsset },
         },
         data: {
-          available: newAvailable.toString(),
-          locked: locked.toString(),
+          available: newQuoteAvailable.toString(),
+          locked: quoteLocked.toString(),
+        },
+      });
+      
+      const newBaseAvailable = baseAvailable.plus(size);
+      await tx.balances.update({
+        where: {
+          userId_asset: { userId, asset: baseAsset },
+        },
+        data: {
+          available: newBaseAvailable.toString(),
+          locked: baseLocked.toString(),
         },
       });
     } else {
-      // SELL: Add proceeds (price * size - fee) to available
+      // SELL: Deduct SOL, add proceeds (price * size - fee) to USDC
+      const newBaseAvailable = baseAvailable.minus(size);
+      await tx.balances.update({
+        where: {
+          userId_asset: { userId, asset: baseAsset },
+        },
+        data: {
+          available: newBaseAvailable.toString(),
+          locked: baseLocked.toString(),
+        },
+      });
+      
       const proceeds = price.times(size).minus(fee);
-      const newAvailable = available.plus(proceeds);
+      const newQuoteAvailable = quoteAvailable.plus(proceeds);
       await tx.balances.update({
         where: {
           userId_asset: { userId, asset: quoteAsset },
         },
         data: {
-          available: newAvailable.toString(),
-          locked: locked.toString(),
-        },
-      });
-    }
-
-    // 4. Update base asset position
-    let baseBalance = await tx.balances.findUnique({
-      where: {
-        userId_asset: { userId, asset: baseAsset },
-      },
-    });
-
-    if (!baseBalance) {
-      // Initialize base asset balance if not exists
-      baseBalance = await tx.balances.create({
-        data: {
-          userId,
-          asset: baseAsset,
-          available: "0",
-          locked: "0",
-        },
-      });
-    }
-
-    const baseAvailable = new Decimal(baseBalance.available);
-    const baseLocked = new Decimal(baseBalance.locked);
-
-    if (side === "buy") {
-      // BUY: Add to available
-      const newAvailable = baseAvailable.plus(size);
-      await tx.balances.update({
-        where: {
-          userId_asset: { userId, asset: baseAsset },
-        },
-        data: {
-          available: newAvailable.toString(),
-          locked: baseLocked.toString(),
-        },
-      });
-    } else {
-      // SELL: Deduct from available
-      if (baseAvailable.lt(size)) {
-        throw new Error(
-          `Insufficient ${baseAsset} to sell. Have ${baseAvailable.toString()}, need ${size.toString()}`
-        );
-      }
-      const newAvailable = baseAvailable.minus(size);
-      await tx.balances.update({
-        where: {
-          userId_asset: { userId, asset: baseAsset },
-        },
-        data: {
-          available: newAvailable.toString(),
-          locked: baseLocked.toString(),
+          available: newQuoteAvailable.toString(),
+          locked: quoteLocked.toString(),
         },
       });
     }

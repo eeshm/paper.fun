@@ -46,9 +46,7 @@ describe("Concurrency (E2E)", () => {
   });
 
   describe("Double-Spend Prevention", () => {
-    // TODO: Implement SELECT ... FOR UPDATE in @repo/trading to prevent double-spend
-    // Currently the system allows concurrent orders without row-level locking
-    test.skip("prevents spending more than available balance with concurrent orders", async () => {
+    test("prevents spending more than available balance with concurrent orders", async () => {
       // Create fresh wallet with 1000 USDC
       const wallet = createTestWallet();
       const token = await authenticate(wallet);
@@ -353,9 +351,7 @@ describe("Concurrency (E2E)", () => {
   });
 
   describe("Stress Test", () => {
-    // TODO: System needs proper connection pooling/queueing for concurrent requests
-    // Currently only ~1 order succeeds out of 20 concurrent requests
-    test.skip("handles burst of 20 concurrent orders without data corruption", async () => {
+    test("handles burst of 20 concurrent orders without data corruption", async () => {
       const wallet = createTestWallet();
       const token = await authenticate(wallet);
 
