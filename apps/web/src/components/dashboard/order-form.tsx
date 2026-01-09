@@ -7,12 +7,17 @@ import { useTradingStore } from '@/store/trading';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { useAuth } from '@/hooks/useAuth';
 
 export function OrderForm() {
   const [side, setSide] = useState<OrderSide>('buy');
   const [size, setSize] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { addOrder, prices } = useTradingStore();
+  const { connected } = useWallet();
+  const { isAuthenticated, login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,22 +65,20 @@ export function OrderForm() {
           <button
             type="button"
             onClick={() => setSide('buy')}
-            className={`flex-1 py-3 rounded-lg font-medium transition-colors ${
-              side === 'buy'
-                ? 'bg-green-600 text-white'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
+            className={`flex-1 py-3 rounded-lg font-medium transition-colors ${side === 'buy'
+              ? 'bg-green-600 text-white'
+              : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
           >
             Buy SOL
           </button>
           <button
             type="button"
             onClick={() => setSide('sell')}
-            className={`flex-1 py-3 rounded-lg font-medium transition-colors ${
-              side === 'sell'
-                ? 'bg-red-600 text-white'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-            }`}
+            className={`flex-1 py-3 rounded-lg font-medium transition-colors ${side === 'sell'
+              ? 'bg-red-600 text-white'
+              : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              }`}
           >
             Sell SOL
           </button>
@@ -117,27 +120,39 @@ export function OrderForm() {
             </span>
           </div>
         </div>
-
         {/* Submit Button */}
-        <Button
-          type="submit"
-          disabled={isLoading || !size}
-          className={`w-full h-12 text-base font-medium ${
-            side === 'buy'
-              ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-red-600 hover:bg-red-700'
-          }`}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Placing Order...
-            </>
-          ) : (
-            `${side === 'buy' ? 'Buy' : 'Sell'} SOL`
-          )}
-        </Button>
+        {!connected ? (
+          <div className="w-full flex justify-center">
+            <WalletMultiButton className="w-full bg-purple-600! hover:bg-purple-700! h-12! rounded-lg! text-base! font-medium!" />
+          </div>
+        ) : !isAuthenticated ? (
+          <Button
+            type="button"
+            onClick={() => login()}
+            className="w-full h-12 text-base font-medium bg-purple-600 hover:bg-purple-700"
+          >
+            Sign In to Trade
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            disabled={isLoading || !size}
+            className={`w-full h-12 text-base font-medium ${side === 'buy'
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-red-600 hover:bg-red-700'
+              }`}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Placing Order...
+              </>
+            ) : (
+              `${side === 'buy' ? 'Buy' : 'Sell'} SOL`
+            )}
+          </Button>
+        )}
       </form>
-    </div>
+    </div >
   );
 }

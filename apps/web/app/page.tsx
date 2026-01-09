@@ -1,98 +1,99 @@
 'use client';
 
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useTradingStore } from '@/store/trading';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { apiClient } from '@/lib/api-client';
+import { WalletConnect } from '@/components/wallet-connect';
+import { PortfolioSummary } from '@/components/dashboard/portfolio-summary';
+import { PriceChart } from '@/components/dashboard/price-chart';
+import { OrderForm } from '@/components/dashboard/order-form';
+import { OrderHistory } from '@/components/dashboard/order-history';
 
 export default function Home() {
   const router = useRouter();
-  const { connected, publicKey } = useWallet();
-  const { isAuthenticated, login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated, token } = useAuth();
+  const { setBalances, setPositions, setOrders } = useTradingStore();
+  const tradingStore = useTradingStore();
+  const { isConnected: wsConnected, subscribe } = useWebSocket({
+    token,
+    enabled: isAuthenticated,
+  });
+
+  // Load portfolio data from backend on mount
+  useEffect(() => {
+    if (isAuthenticated && token) {
+      const loadPortfolio = async () => {
+        try {
+          const portfolio = await apiClient.getPortfolio();
+          setBalances(portfolio.balances);
+          setPositions(portfolio.positions);
+        } catch (error) {
+          console.error('Failed to load portfolio:', error);
+        }
+      };
+
+      const loadOrders = async () => {
+        try {
+          const fetchedOrders = await apiClient.getOrders();
+          setOrders(fetchedOrders);
+        } catch (error) {
+          console.error('Failed to load orders:', error);
+        }
+      };
+
+      loadPortfolio();
+      loadOrders();
+    }
+  }, [isAuthenticated, token, setBalances, setPositions, setOrders]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
+    // Subscribe to real-time updates
+    if (wsConnected) {
+      subscribe('prices');
+      subscribe('portfolio');
+      subscribe('orders');
     }
-  }, [isAuthenticated, router]);
-
-  const handleLogin = async () => {
-    if (!connected || !publicKey) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await login();
-    } catch (error) {
-      console.error('Login error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [wsConnected, subscribe]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-900 via-purple-900 to-slate-900">
-      <main className="flex flex-col items-center justify-center gap-12 text-center px-4 sm:px-6 lg:px-8">
-        <div className="space-y-4">
-          <h1 className="text-5xl sm:text-6xl font-bold text-white">
-            Solana Paper Trading
-          </h1>
-          <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto">
-            Practice trading Solana with virtual $1,000,000 USD. Real-time prices,
-            zero risk, maximum learning.
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          {!connected ? (
-            <div className="flex flex-col items-center gap-4">
+    <div className="min-h-screen bg-slate-900">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/95 backdrop-blur">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Paper Trading</h1>
               <p className="text-sm text-slate-400">
-                Connect your wallet to get started
+                WebSocket: {wsConnected ? '🟢 Connected' : '🔴 Disconnected'}
               </p>
-              <WalletMultiButton />
             </div>
-          ) : (
-            <Button
-              onClick={handleLogin}
-              disabled={isLoading}
-              size="lg"
-              className="h-12 px-8 text-base"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign in with Wallet'
-              )}
-            </Button>
-          )}
+            <WalletConnect />
+          </div>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-16 text-left max-w-4xl">
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-white">Real-time Prices</h3>
-            <p className="text-sm text-slate-400">
-              Live SOL/USD prices powered by Pyth network
-            </p>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Portfolio Summary */}
+        <PortfolioSummary
+          balances={tradingStore.balances}
+          positions={tradingStore.positions}
+        />
+
+        {/* Trading Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+          {/* Left Column: Chart and Order Form */}
+          <div className="lg:col-span-2 space-y-8">
+            <PriceChart prices={tradingStore.prices} />
+            <OrderForm />
           </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-white">Market Orders</h3>
-            <p className="text-sm text-slate-400">
-              Instant execution at current market prices
-            </p>
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold text-white">Zero Risk</h3>
-            <p className="text-sm text-slate-400">
-              Paper trading with virtual funds
-            </p>
+
+          {/* Right Column: Order History */}
+          <div>
+            <OrderHistory orders={tradingStore.orders} />
           </div>
         </div>
       </main>

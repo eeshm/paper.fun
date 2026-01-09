@@ -16,17 +16,6 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
 /**
  * Create and configure WebSocket server
- *
- * TODO:
- * 1. Create WebSocketServer on specified port
- * 2. Set up "connection" event handler -> call handleConnection
- * 3. Set up heartbeat interval:
- *    - Iterate wss.clients
- *    - If !ws.isAlive: terminate connection
- *    - Else: set isAlive = false, call ws.ping()
- * 4. Set up "close" event to clearInterval on server shutdown
- * 5. Return wss
- *
  * @param port Port to listen on
  * @returns WebSocketServer instance
  */
