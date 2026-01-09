@@ -2,7 +2,7 @@
 
 ## Quick Reference
 
-**This is a production-grade trading backend, not a demo.** Architectural discipline is non-negotiable.
+**This is a production-grade paper trading platform.** Architectural discipline is non-negotiable.
 
 ### Key Principle
 - **Wallet = Identity only** (not funds, not balance)
@@ -11,44 +11,97 @@
 
 ---
 
-## Development Workflow
+## Project Structure
 
-### Build & Run
-```bash
-turbo run build           # Build all packages
-turbo run dev             # Start all dev servers
-turbo run check-types     # Type check
-turbo run lint            # Lint all
 ```
-
-### Database Workflow
-```bash
-bun run migrate:dev       # Create/apply migrations (in @repo/db)
-bun run migrate:deploy    # Deploy migrations (production)
-bunx prisma studio       # Visual database explorer
-```
-
-### Infrastructure
-```
-Redis:     localhost:6379 (REDIS_URL in .env)
-Postgres:  localhost:5432 (DATABASE_URL in .env)
-API:       localhost:3000 (apps/api)
-WebSocket: localhost:3001 (apps/ws, planned)
+paper-trading/
+├── apps/
+│   ├── api/                 # Express REST API (port 3000)
+│   ├── ws/                  # WebSocket server (port 3001)
+│   └── web/                 # Next.js frontend (port 3002) [TODO]
+├── packages/
+│   ├── db/                  # Prisma + PostgreSQL (singleton)
+│   ├── redis/               # Redis client + keys + pub/sub
+│   ├── auth/                # Wallet signing, sessions, nonces
+│   ├── trading/             # Orders, positions, portfolio
+│   ├── pricing/             # Price cache (get/set from Redis)
+│   ├── events/              # Redis pub/sub event publishing
+│   ├── env/                 # Zod-validated environment config
+│   ├── ui/                  # Shared UI components [TODO]
+│   └── typescript-config/   # Shared TS configs
+├── workers/
+│   └── price-ingestion/     # Pyth network price feed worker
+├── tests/
+│   └── e2e/                 # 89 E2E tests (Vitest + Supertest)
+└── prisma/
+    └── schema.prisma        # Database schema
 ```
 
 ---
 
-## Architecture Essentials (Enforce These)
+## Development Workflow
 
-### Ownership Rules (Critical)
+### Build & Run
+```bash
+bun install               # Install dependencies
+bun run build             # Build all packages (turbo)
+bun run dev               # Start all dev servers
+bun run dev:api           # Start API only
+bun run dev:ws            # Start WebSocket only
+bun run dev:price         # Start price worker only
+bun run check-types       # Type check all
+bun run lint              # Lint all
+```
+
+### Testing
+```bash
+bun run test              # Run all tests
+bun run test:e2e          # Run E2E tests only (89 tests)
+npx vitest run tests/e2e/flows/  # Run specific test folder
+```
+
+### Database Workflow
+```bash
+bun run migrate:dev       # Create/apply migrations
+bun run migrate:deploy    # Deploy migrations (production)
+bunx prisma studio        # Visual database explorer
+```
+
+### Infrastructure (Docker)
+```bash
+# Development
+docker run -d --name postgres-dev -p 5432:5432 -e POSTGRES_PASSWORD=devpass -e POSTGRES_DB=paper_trading postgres:16
+docker run -d --name redis-dev -p 6379:6379 redis:7
+
+# Testing (separate DB)
+docker run -d --name postgres-test -p 5433:5432 -e POSTGRES_PASSWORD=testpass -e POSTGRES_DB=paper_trading_test postgres:16
+```
+
+### Ports
+```
+API:              localhost:3000
+WebSocket:        localhost:3001
+Frontend:         localhost:3002 [TODO]
+PostgreSQL:       localhost:5432
+PostgreSQL Test:  localhost:5433
+Redis:            localhost:6379
+```
+
+---
+
+## Architecture (Enforce These)
+
+### Package Ownership Rules
 | Layer | Owner | Rule |
 |-------|-------|------|
-| **Transport** | `apps/api`, `apps/ws` | HTTP/WS only, no logic |
-| **Business Logic** | `packages/*` | Pure functions, no Express/Redis imports |
-| **Database** | `@repo/db` only | Singleton PrismaClient, all DB access here |
+| **Transport** | `apps/api`, `apps/ws` | HTTP/WS only, no business logic |
+| **Business Logic** | `packages/*` | Pure functions, no Express imports |
+| **Database** | `@repo/db` only | Singleton PrismaClient |
 | **Caching/Pub/Sub** | `@repo/redis` only | All Redis access here |
-| **Auth** | `@repo/auth` | Wallet signing, session verification |
-| **Trading** | `@repo/trading` | Order execution, position math |
+| **Auth** | `@repo/auth` | Wallet signing, sessions, nonces |
+| **Trading** | `@repo/trading` | Orders, positions, portfolio |
+| **Pricing** | `@repo/pricing` | Price get/set from Redis |
+| **Events** | `@repo/events` | Pub/sub event publishing |
 
 **NEVER violate these boundaries.** No app may instantiate its own DB or Redis client.
 
@@ -81,48 +134,150 @@ Apply the same to `@repo/redis`: `initRedis()`, `getRedis()`, `isRedisHealthy()`
 ```
 apps/api/src/
 ├── index.ts              # App creation, server startup
-├── middlewares/          # Express middleware (logging, errors, auth)
-├── routes/               # HTTP endpoints (route definitions only)
-├── controllers/          # Request handling (parse → delegate → respond)
+├── middlewares/          # Auth, rate limiting, validation, errors
+├── routes/               # Route definitions only
+├── controllers/          # Request → delegate → respond
+├── schemas/              # Zod validation schemas
 └── services/             # Business logic (import from @repo/*)
 ```
 
 **Rule**: Routes call Controllers, Controllers call Domain Services.  
-Controllers never touch DB—they call functions exported from `@repo/db`.
+Controllers never touch DB—they call functions exported from `@repo/*`.
 
-### Example Flow: Place Order
+### Data Flow: Place Order
 ```
-POST /orders (Express route)
-  ↓ router → controller
-  ↓ validate request
-  ↓ import { executeOrder } from '@repo/trading'
-  ↓ executeOrder(userId, orderData)
-    ↓ reads from @repo/db (balance check)
-    ↓ reads from Redis (price)
-    ↓ executes db.$transaction() (atomic order + balance update)
-    ↓ publishes to Redis pub/sub (broadcast to WS)
-  ↓ controller returns response
+POST /orders
+  ↓ rateLimit middleware (Redis-based)
+  ↓ authMiddleware (validate session)
+  ↓ validate middleware (Zod schema)
+  ↓ placeOrderHandler (controller)
+  ↓ placeOrder() from @repo/trading
+    ↓ Lock rows with SELECT FOR UPDATE
+    ↓ Validate balance (USDC for buy, SOL for sell)
+    ↓ Create order + trade + update balances (atomic)
+    ↓ Update position with weighted avg price
+  ↓ publishOrderFilled() from @repo/events
+  ↓ publishPortfolioUpdate() from @repo/events
+  ↓ Return response
+```
+
+### WebSocket Flow
+```
+Client connects to WS server (port 3001)
+  ↓ Send { type: "auth", token: "..." }
+  ↓ Server validates session via @repo/auth
+  ↓ Send { type: "subscribe", channel: "prices" }
+  ↓ Server adds client to channel
+  
+Price worker publishes to Redis
+  ↓ WS server receives via Redis subscription
+  ↓ Broadcasts to all subscribed clients
 ```
 
 ---
 
-## Infrastructure Implementation Status
+## Implementation Status
 
-### ✅ Done
+### ✅ Complete
 - **@repo/db**: Prisma + PostgreSQL, migrations, singleton client
-- **@repo/env**: Zod schema validation, centralized env config
-- **@repo/redis**: Client, health checks, key management (keys.ts)
-- **apps/api**: Express setup, /health endpoint, middleware pattern
+- **@repo/redis**: Client, health checks, keys, pub/sub channels
+- **@repo/auth**: Wallet signature verification, sessions, nonces
+- **@repo/trading**: Orders, positions, portfolio, row-level locking
+- **@repo/pricing**: Price get/set/seed from Redis
+- **@repo/events**: Pub/sub publishing (price, order, portfolio)
+- **@repo/env**: Zod-validated environment config
+- **apps/api**: REST API with all endpoints, rate limiting, validation
+- **apps/ws**: WebSocket server with real-time updates
+- **workers/price-ingestion**: Pyth network price feed
+- **Security**: Rate limiting, input validation (Zod), Helmet, CORS
+- **Graceful shutdown**: Handle SIGTERM, drain connections
+- **Tests**: 89 E2E tests (auth, trading, concurrency, P&L, WebSocket)
 
-### 🚧 In Progress
-- **@repo/auth**: Wallet signature verification (TODO)
-- **@repo/trading**: Order execution engine (TODO)
-- **apps/ws**: WebSocket gateway (TODO)
+### 🚧 TODO
+- **apps/web**: Next.js frontend
+- **@repo/ui**: Shared UI components
+- **Audit triggers**: Postgres triggers for immutable trade logs
+- **Row-level security**: Users access only their data
+- **Metrics**: Prometheus endpoints
 
-### ❌ Not Started
-- **@repo/pricing**: Price normalization
-- **@repo/portfolio**: P&L calculations
-- **workers/price-ingestion**: Market data ingestion
+---
+
+## API Endpoints
+
+### Auth
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/nonce` | No | Get signing nonce |
+| POST | `/auth/login` | No | Login with signature |
+| POST | `/auth/logout` | Yes | Logout, invalidate session |
+
+### Orders
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/orders` | Yes | Place market order |
+| GET | `/orders` | Yes | List user's orders |
+| GET | `/orders/:orderId` | Yes | Get single order |
+
+### Portfolio
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/portfolio` | Yes | Get balances + positions |
+
+### Market
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/market/price/:symbol` | No | Get current price |
+| GET | `/market/status` | No | Get market status |
+
+### Health
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/health` | No | DB + Redis health |
+
+---
+
+## WebSocket Messages
+
+### Client → Server
+```typescript
+{ type: "auth", token: string }
+{ type: "subscribe", channel: "prices" | "orders" | "portfolio" }
+{ type: "unsubscribe", channel: string }
+{ type: "ping" }
+```
+
+### Server → Client
+```typescript
+{ type: "auth", success: boolean, userId?: number }
+{ type: "subscribed", channel: string }
+{ type: "unsubscribed", channel: string }
+{ type: "pong" }
+{ type: "price", symbol: string, price: string, timestamp: string }
+{ type: "order_filled", orderId: number, executedPrice: string, executedSize: string, fee: string }
+{ type: "portfolio", balances: [], positions: [] }
+```
+
+---
+
+## Trading Rules
+
+### Supported Assets
+- **SOL** - Solana token (tradeable)
+- **USDC** - Virtual USD stablecoin (quote currency)
+
+### Order Types
+- **Market orders only** - Instant execution at current price
+
+### Fees
+- **0.1%** of trade value (executedPrice × executedSize)
+
+### Initial Balance
+- **$1,000 USDC** for new users (paper trading)
+
+### Position Rules
+- **Long only** - No short selling
+- **Minimum size**: 0.01 SOL
+- **avgEntryPrice**: Weighted average, resets to 0 when fully closed
 
 ---
 
@@ -134,9 +289,9 @@ POST /orders (Express route)
 import { getDb } from '@repo/db';
 import { client as redis } from '@repo/redis';
 
-export const getUserBalance = async (userId: string) => {
+export const getUserBalance = async (userId: number) => {
   const db = getDb();
-  return await db.portfolio.findUnique({ where: { userId } });
+  return await db.balances.findMany({ where: { userId } });
 };
 
 // ❌ WRONG: Creating your own client
@@ -167,45 +322,76 @@ app.listen(port, () => console.log(`Listening on ${port}`));
 
 ---
 
-## Data Flow & Critical Rules
+## Concurrency Safety (CRITICAL)
 
-### Order Execution (Atomic)
-1. Validate user session (from Redis or @repo/auth)
-2. Read user balance (Postgres)
-3. Read price (Redis cache, fail if stale)
-4. Calculate cost + fees
-5. **Atomic transaction**:
-   ```typescript
-   await db.$transaction(async (tx) => {
-     // Check balance
-     const balance = await tx.portfolio.findUnique({...});
-     if (balance.cash < cost) throw new Error('Insufficient funds');
-     
-     // Create order + update balance atomically
-     await tx.order.create({...});
-     await tx.portfolio.update({...});
-   });
-   ```
-6. Publish event to Redis (triggers WebSocket broadcast)
-7. Return response
+### Row-Level Locking
+All balance updates use `SELECT ... FOR UPDATE`:
+```typescript
+// Lock BOTH quote and base asset rows upfront
+const quoteBalanceRows = await tx.$queryRaw<Array<{...}>>`
+  SELECT id, available::text, locked::text 
+  FROM balances 
+  WHERE "userId" = ${userId} AND asset = ${quoteAsset}
+  FOR UPDATE
+`;
 
-**Why atomic?** Two concurrent orders can't double-spend the same balance.
-
-### Real-Time Broadcasting (Price Updates)
-```
-Market data received
-  ↓ parse price
-  ↓ write to Redis (cache key: `price:SOL`)
-  ↓ publish to Redis channel (`prices:SOL`)
-    ↓ all connected WS clients subscribed to `prices:SOL` get update instantly
-    ↓ no polling, no database hit
+const baseBalanceRows = await tx.$queryRaw<Array<{...}>>`
+  SELECT id, available::text, locked::text 
+  FROM balances 
+  WHERE "userId" = ${userId} AND asset = ${baseAsset}
+  FOR UPDATE
+`;
 ```
 
-Redis Pub/Sub is the **fan-out backbone**. It's not optional.
+### Portfolio Initialization
+Uses advisory locks to prevent race conditions:
+```typescript
+await tx.$queryRaw`SELECT pg_advisory_xact_lock(${userId}::bigint)::text`;
+```
+
+### Why This Matters
+- Two concurrent BUY orders can't double-spend the same USDC
+- Two concurrent SELL orders can't sell more SOL than available
+- Portfolio init during concurrent logins won't create duplicates
 
 ---
 
-## Testing & Debugging
+## Testing
+
+### Test Structure (89 E2E tests)
+```
+tests/e2e/
+├── flows/
+│   ├── auth.test.ts        # 9 tests - login, logout, nonce
+│   ├── trading.test.ts     # 13 tests - buy, sell, fees
+│   ├── realtime.test.ts    # 16 tests - WebSocket, subscriptions
+│   ├── failure.test.ts     # 24 tests - error handling
+│   ├── concurrency.test.ts # 7 tests - double-spend, race conditions
+│   └── pnl.test.ts         # 20 tests - P&L, avg entry price
+├── helpers/
+│   ├── wallet.ts           # Ed25519 test wallet creation
+│   ├── price.ts            # Price injection
+│   └── auth.ts             # Auth helpers
+└── setup/
+    ├── testServer.ts       # API test server
+    └── testWsServer.ts     # WS test server
+```
+
+### Running Tests
+```bash
+# Ensure test DB is running
+docker run -d --name postgres-test -p 5433:5432 -e POSTGRES_PASSWORD=testpass -e POSTGRES_DB=paper_trading_test postgres:16
+
+# Run all tests
+bun run test
+
+# Run specific suite
+npx vitest run tests/e2e/flows/trading.test.ts
+```
+
+---
+
+## Debugging
 
 ### Check Infrastructure Health
 ```bash
@@ -216,13 +402,7 @@ bunx prisma studio   # Visual DB explorer
 redis-cli
 > PING
 > KEYS *              # See all keys
-> GET price:SOL      # Check specific key
-```
-
-### Logging
-```typescript
-// Use environment-aware logging
-console.log(process.env.NODE_ENV);  // Check if development/production
+> GET trading:price:SOL  # Check price
 ```
 
 ### Turbo Graph
@@ -239,15 +419,21 @@ turbo run build --graph   # Visualize dependency graph
 2. Does it have business logic? → Create @repo/new-domain package
 3. Does an app need this? → Export from domain package, import in app
 4. Does it need a database table? → Update prisma/schema.prisma, then `bun run migrate:dev`
-5. Is there cross-app communication? → Use Redis Pub/Sub
+5. Is there cross-app communication? → Use Redis Pub/Sub via @repo/events
 6. Does it fail gracefully? → Add health check, fail fast on startup
+7. Add E2E tests in tests/e2e/flows/
 
 ---
 
 ## Critical Files to Review
 - [prisma/schema.prisma](prisma/schema.prisma) — Database schema
-- [packages/db/README.md](packages/db/README.md) — DB patterns
 - [packages/db/src/index.ts](packages/db/src/index.ts) — Singleton pattern
+- [packages/trading/src/orders.ts](packages/trading/src/orders.ts) — Order execution with locking
+- [packages/trading/src/portfolio.ts](packages/trading/src/portfolio.ts) — Portfolio init
+- [apps/api/src/index.ts](apps/api/src/index.ts) — API startup flow
+- [apps/ws/src/index.ts](apps/ws/src/index.ts) — WebSocket server
+- [packages/redis/src/keys.ts](packages/redis/src/keys.ts) — Redis key naming
+- [turbo.json](turbo.json) — Build configuration
 - [apps/api/src/index.ts](apps/api/src/index.ts) — Startup flow
 - [turbo.json](turbo.json) — Build configuration
 - [packages/redis/src/keys.ts](packages/redis/src/keys.ts) — Redis key naming strategy
@@ -359,11 +545,18 @@ const priceKey = redisKeys.PRICE.solPrice();
 
 ## Production Readiness
 
-**Before trading goes live:**
+### ✅ Implemented
+- Row-level locking (SELECT FOR UPDATE) for balance updates
+- Advisory locks for portfolio initialization
+- Graceful shutdown handling
+- Rate limiting per wallet/IP
+- Input validation (Zod schemas)
+- 89 E2E tests including concurrency tests
+
+### 🚧 Before Production
 1. Add row-level security to user data in Postgres
 2. Implement audit triggers on orders/trades
 3. Set up PgBouncer for external connection pooling
 4. Add replication lag checks to /health endpoint
-5. Implement graceful shutdown with timeout
-6. Test transaction isolation at high concurrency
-7. Verify all prices are timestamped on server (no client time)
+5. Add Prometheus metrics endpoints
+6. Verify all prices are timestamped on server (no client time)
