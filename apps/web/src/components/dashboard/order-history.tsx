@@ -17,8 +17,8 @@ const statusConfig = {
 
 export function OrderHistory({ orders }: OrderHistoryProps) {
   return (
-    <Card className="h-full p-5">
-      <CardHeader className="pb-4">
+    <Card className="h-full">
+      <CardHeader>
         <CardTitle>Order History</CardTitle>
       </CardHeader>
       <CardContent>

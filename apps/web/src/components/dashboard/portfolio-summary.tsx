@@ -39,8 +39,8 @@ export function PortfolioSummary({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
       {/* Total Portfolio Value */}
-      <Card className="p-5">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Portfolio Value</CardTitle>
         </CardHeader>
         <CardContent>
@@ -50,8 +50,8 @@ export function PortfolioSummary({
       </Card>
 
       {/* USDC Balance */}
-      <Card className="p-5">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">USDC Available</CardTitle>
         </CardHeader>
         <CardContent>
@@ -65,8 +65,8 @@ export function PortfolioSummary({
       </Card>
 
       {/* SOL Position */}
-      <Card className="p-5">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">SOL Holding</CardTitle>
         </CardHeader>
         <CardContent>
@@ -80,8 +80,8 @@ export function PortfolioSummary({
       </Card>
 
       {/* Unrealized P&L */}
-      <Card className="p-5">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-sm font-medium">Unrealized P&L</CardTitle>
         </CardHeader>
         <CardContent>

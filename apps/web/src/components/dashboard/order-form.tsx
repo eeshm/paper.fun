@@ -58,8 +58,8 @@ export function OrderForm() {
   const estimatedCost = (parseFloat(size) || 0) * solPrice;
 
   return (
-    <Card className="p-5">
-      <CardHeader className="pb-4">
+    <Card>
+      <CardHeader>
         <CardTitle>Place Order</CardTitle>
       </CardHeader>
       <CardContent>
