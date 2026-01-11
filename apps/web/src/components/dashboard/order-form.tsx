@@ -8,32 +8,46 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DashboardWrapper } from '@/components/dashboard-wrapper';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletConnect } from '@/components/wallet-connect';
 import { useAuth } from '@/hooks/useAuth';
 import { formatCurrency } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function OrderForm() {
   const [side, setSide] = useState<OrderSide>('buy');
   const [size, setSize] = useState('');
+  const [currency, setCurrency] = useState<'SOL' | 'USDC'>('SOL');
   const [isLoading, setIsLoading] = useState(false);
   const { addOrder, prices, balances } = useTradingStore();
   const { connected } = useWallet();
   const { isAuthenticated, login } = useAuth();
 
   const usdcBalance = balances.find((b) => b.asset === 'USDC');
+  const solPrice = parseFloat(prices.SOL?.price) || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!size || parseFloat(size) <= 0) {
-      toast.error('Please enter a valid size');
+    const numericSize = parseFloat(size);
+    if (!size || numericSize <= 0) {
+      toast.error('Please enter a valid amount');
       return;
     }
 
-    if (parseFloat(size) < 0.01) {
+    let solAmount = numericSize;
+    if (currency === 'USDC') {
+      solAmount = numericSize / solPrice;
+    }
+
+    if (solAmount < 0.01) {
       toast.error('Minimum order size is 0.01 SOL');
       return;
     }
@@ -44,7 +58,7 @@ export function OrderForm() {
         side,
         baseAsset: 'SOL',
         quoteAsset: 'USDC',
-        requestedSize: size,
+        requestedSize: solAmount.toString(),
       });
 
       addOrder(order);
@@ -58,8 +72,10 @@ export function OrderForm() {
     }
   };
 
-  const solPrice = parseFloat(prices.SOL?.price);
-  const estimatedCost = (parseFloat(size) || 0) * solPrice;
+  const numericAmount = parseFloat(size) || 0;
+  const estimatedValue = currency === 'SOL'
+    ? numericAmount * solPrice
+    : numericAmount / solPrice;
 
   return (
     <DashboardWrapper name="Place Order" className="h-full">
@@ -93,25 +109,47 @@ export function OrderForm() {
               </span>
             </div>
 
-            {/* Size Input */}
+            {/* Amount Input */}
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">
-                Size (SOL)
+                Amount
               </label>
-              <Input
-                type="text"
-                value={size}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
-                    setSize(value);
-                  } else {
-                  }
-                }}
-                placeholder="Enter SOL amount"
-              />
+              <div className="relative">
+                <Input
+                  type="text"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                      setSize(value);
+                    }
+                  }}
+                  value={size}
+                  className="text-right pr-20"
+                  placeholder={currency == "SOL" ? "0.0000" : "0.00"}
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                  Amount
+                </span>
+                <div className="absolute right-1 top-1 bottom-1">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-full gap-1 text-xs font-medium px-2">
+                        {currency}
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className='bg-card min-w-16'>
+                      <DropdownMenuItem onClick={() => setCurrency('SOL')}>SOL</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setCurrency('USDC')}>USDC</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
               <p className="text-xs text-muted-foreground">
-                Estimated cost: ${estimatedCost.toFixed(5)} USDC
+                {currency === 'SOL'
+                  ? `≈ ${formatCurrency(estimatedValue)}`
+                  : `≈ ${estimatedValue.toFixed(4)} SOL`
+                }
               </p>
             </div>
 
@@ -128,7 +166,7 @@ export function OrderForm() {
               <div className="flex justify-between text-muted-foreground">
                 <span>Fee (0.1%):</span>
                 <span className="text-foreground">
-                  ${(estimatedCost * 0.001).toFixed(2)}
+                  ${(currency === 'SOL' ? estimatedValue * 0.001 : numericAmount * 0.001).toFixed(2)}
                 </span>
               </div>
             </div>

@@ -57,7 +57,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
           {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-6)}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56 bg-border">
+      <DropdownMenuContent align="end" className="min-w-35 bg-border">
         <DropdownMenuItem onClick={copyAddress} className='hover:bg-card/60 hover:cursor-pointer'>
           {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-6)}
           <Copy className="mr-0 h-4 w-8" />
