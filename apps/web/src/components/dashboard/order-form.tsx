@@ -59,8 +59,8 @@ export function OrderForm() {
   const estimatedCost = (parseFloat(size) || 0) * solPrice;
 
   return (
-    <DashboardWrapper name="Place Order">
-      <Card>
+    <DashboardWrapper name="Place Order" className="h-full">
+      <Card className="h-full">
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Side Selection */}

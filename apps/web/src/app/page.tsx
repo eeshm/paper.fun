@@ -66,8 +66,8 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold tracking-tight">Paper Trading</h1>
             <div className={`px-2 py-0.5 rounded-full text-xs font-medium border ${wsConnected
-                ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                : 'bg-red-500/10 text-red-500 border-red-500/20'
+              ? 'bg-green-500/10 text-green-500 border-green-500/20'
+              : 'bg-red-500/10 text-red-500 border-red-500/20'
               }`}>
               {wsConnected ? 'Live' : 'Disconnected'}
             </div>
@@ -77,24 +77,26 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Portfolio Summary */}
-        <PortfolioSummary
-          balances={tradingStore.balances}
-          positions={tradingStore.positions}
-        />
-
-        {/* Trading Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Column: Chart and Order Form */}
-          <div className="lg:col-span-8 space-y-6">
+      <main className="w-full h-[calc(100vh-4rem)] p-4 space-y-4 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+          {/* Top Row: Chart (Left 3/4) and Order Form (Right 1/4) */}
+          <div className="lg:col-span-9 h-[75%]">
             <PriceChart prices={tradingStore.prices} />
+          </div>
+          <div className="lg:col-span-3 h-[75%]">
             <OrderForm />
           </div>
 
-          {/* Right Column: Order History */}
-          <div className="lg:col-span-4">
+          {/* Bottom Row: Order History (Left 3/4) and Portfolio Summary (Right 1/4) */}
+          <div className="lg:col-span-9 h-[25%]">
             <OrderHistory orders={tradingStore.orders} />
+          </div>
+          <div className="lg:col-span-3 h-[25%]">
+            <PortfolioSummary
+              balances={tradingStore.balances}
+              positions={tradingStore.positions}
+              className="h-full"
+            />
           </div>
         </div>
       </main>

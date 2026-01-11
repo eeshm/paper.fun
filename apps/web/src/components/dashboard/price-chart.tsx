@@ -37,8 +37,8 @@ export function PriceChart({ prices }: PriceChartProps) {
   }, [solPrice]);
 
   return (
-    <DashboardWrapper name="SOL/USD Price Chart">
-      <Card>
+    <DashboardWrapper name="SOL/USD Price Chart" className="h-full">
+      <Card className="h-full">
         <CardContent>
           <div className="flex flex-col mb-4">
             <span className="text-2xl font-semibold tracking-tight text-foreground">
