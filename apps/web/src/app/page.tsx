@@ -61,15 +61,15 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="w-full px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-lg font-semibold tracking-tight">Paper Trading</h1>
-            <div className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${wsConnected
-              ? 'bg-green-500/10 text-green-500 border-green-500/20'
-              : 'bg-red-500/10 text-red-500 border-red-500/20'
+      <header className="sticky top-0 z-40 bg-background">
+        <div className="w-full px-4 h-12 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-sm font-medium tracking-tight text-foreground">Paper Trading</h1>
+            <div className={`px-2 py-0.5 rounded text-[10px] font-medium ${wsConnected
+              ? 'bg-green-500/10 text-green-500'
+              : 'bg-red-500/10 text-red-500'
               }`}>
-              {wsConnected ? 'Live' : 'Disconnected'}
+              {wsConnected ? '● Live' : '○ Offline'}
             </div>
           </div>
           <WalletConnect />
@@ -88,11 +88,11 @@ export default function Home() {
           </div>
 
           {/* Bottom Row: Order History (Left 3/4) and Portfolio Summary (Right 1/4) */}
-          <div className="lg:col-span-9 ">
+          <div className="lg:col-span-9 h-[450px]">
             {/* <OrderHistory orders={tradingStore.orders} /> */}
-            <OrderHistory  />
+            <OrderHistory />
           </div>
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 h-[450px]">
             <PortfolioSummary
               balances={tradingStore.balances}
               positions={tradingStore.positions}

@@ -102,7 +102,7 @@ function OrderRow({ order, isBuy }: OrderRowProps) {
         <Description>{isBuy ? '🟢 BUY' : '🔴 SELL'} SOL</Description>
         <Description className='text-[10px]'>{formatDate(order.createdAt)}</Description>
       </div>
-      
+
       <div className='text-xs space-y-1 text-muted-foreground pl-0'>
         <div className='flex justify-between'>
           <span>Size:</span>
@@ -124,9 +124,9 @@ function OrderRow({ order, isBuy }: OrderRowProps) {
 export function OrderHistory({ orders = sampleOrders }: OrderHistoryProps) {
   return (
     <DashboardWrapper name="Order History" className="h-full">
-      <Card className="h-full border-0 shadow-none overflow-hidden">
-        <CardContent className="p-4 h-full min-h-0">
-          <div className="space-y-3 h-full overflow-y-auto">
+      <Card className="h-full border-0 shadow-none overflow-hidden flex flex-col">
+        <CardContent className="p-4 flex-1 min-h-0 flex flex-col">
+          <div className="space-y-3 flex-1 overflow-y-auto pr-2">
             {orders.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No orders yet</p>
