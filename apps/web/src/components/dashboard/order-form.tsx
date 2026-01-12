@@ -180,7 +180,7 @@ export function OrderForm() {
               <Button
                 type="button"
                 onClick={() => login()}
-                className="w-full"
+                className="w-full rounded-xs"
               >
                 Sign In to Trade
               </Button>

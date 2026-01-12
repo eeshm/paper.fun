@@ -43,7 +43,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
       <Button
         onClick={() => setVisible(true)}
         variant="secondary"
-        className={cn("font-medium", className)}
+        className={cn("font-medium rounded-xs", className)}
       >
         Connect Wallet
       </Button>
@@ -53,7 +53,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="font-mono outline-0 hover:border-none border-none hover:outline-0 hover:bg-border hover:cursor-pointer bg-border/80">
+        <Button variant="outline" className="font-mono outline-0 hover:border-none border-none rounded-xs hover:outline-0 hover:bg-border hover:cursor-pointer bg-border/80">
           {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-6)}
         </Button>
       </DropdownMenuTrigger>

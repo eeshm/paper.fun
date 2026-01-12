@@ -25,7 +25,7 @@ export function PortfolioSummary({
   const solPosition = positions.find((p) => p.asset === 'SOL');
 
   // Calculate portfolio value (USDC balance + SOL position value)
-  const solPrice = parseFloat(prices.SOL?.price || '150');
+  const solPrice = parseFloat(prices.SOL?.price || '0');
   const solValue = solPosition
     ? parseFloat(solPosition.size) * solPrice
     : 0;
@@ -44,53 +44,74 @@ export function PortfolioSummary({
   return (
     <DashboardWrapper name="Portfolio Overview" className={className}>
       <Card className="h-full border-0 shadow-none overflow-hidden">
-        <CardContent className="p-4 h-full min-h-0">
-          <div className="grid grid-cols-2 gap-4 h-full overflow-y-auto">
+        <CardContent className="p-2 h-full min-h-0">
+          <div className="flex flex-col space-y-4">
             {/* Total Portfolio Value */}
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Total Value</p>
-              <div className="text-xl font-semibold tracking-tight text-foreground">{formatCurrency(totalValue)}</div>
-              <p className="text-[10px] text-muted-foreground">Init: $1M</p>
-            </div>
-
+            <Card2>
+              <Description>Total Value</Description>
+              <div className='ml-auto text-right'>
+                <Value>{formatCurrency(totalValue)}</Value>
+              </div>
+            </Card2>
             {/* Unrealized P&L */}
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">Unrealized P&L</p>
-              <div className="flex items-center gap-2">
-                <div className={`text-xl font-semibold tracking-tight ${unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {unrealizedPnL >= 0 ? '+' : ''}{formatCurrency(unrealizedPnL)}
-                </div>
-                {unrealizedPnL >= 0 ? (
+            <Card2>
+              <Description>Unrealized P&L</Description>
+              <div className='ml-auto text-right'>
+                  {/* {unrealizedPnL >= 0 ? (
                   <TrendingUp className="w-4 h-4 text-green-500" />
                 ) : (
                   <TrendingDown className="w-4 h-4 text-red-500" />
+                )} */}
+                  <Value className={`${unrealizedPnL >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                   <span className='text-[10px]'>({unrealizedPnLPercent >= 0 ? '+' : ''}{unrealizedPnLPercent.toFixed(2)}%)</span> {unrealizedPnL >= 0 ? '+' : ''}{formatCurrency(unrealizedPnL)} 
+                  </Value>
+              </div>
+            </Card2>
+            {/* USDC Balance */}
+            <Card2>
+              <Description>USDC Balance</Description>
+              <div className='ml-auto text-right'>
+                <Value>{formatCurrency(usdcBalance?.available || '0')}</Value>
+                {usdcBalance?.locked && parseFloat(usdcBalance.locked) > 0 && (
+                  <p className="text-[10px] text-muted-foreground">Locked: {formatCurrency(usdcBalance.locked)}</p>
                 )}
               </div>
-              <p className={`text-[10px] ${unrealizedPnLPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {unrealizedPnLPercent >= 0 ? '+' : ''}{unrealizedPnLPercent.toFixed(2)}%
-              </p>
-            </div>
-
-            {/* USDC Balance */}
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">USDC Balance</p>
-              <div className="text-lg font-medium tracking-tight text-foreground">{formatCurrency(usdcBalance?.available || '0')}</div>
-              {usdcBalance?.locked && parseFloat(usdcBalance.locked) > 0 && (
-                <p className="text-[10px] text-muted-foreground">Locked: {formatCurrency(usdcBalance.locked)}</p>
-              )}
-            </div>
+            </Card2>
 
             {/* SOL Position */}
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">SOL Holding</p>
-              <div className="text-lg font-medium tracking-tight text-foreground">{formatNumber(solBalance?.available || '0', 4)} SOL</div>
-              {solPosition && parseFloat(solPosition.size) > 0 && (
-                <p className="text-[10px] text-muted-foreground">Avg: ${formatNumber(solPosition.avgEntryPrice, 2)}</p>
-              )}
-            </div>
+            <Card2>
+              <Description>SOL Holding</Description>
+              <div className='ml-auto text-right'>
+                <Value>{formatNumber(solBalance?.available || '0', 4)} SOL</Value>
+                {solPosition && parseFloat(solPosition.size) > 0 && (
+                  <p className="text-[10px] text-muted-foreground">Avg: ${formatNumber(solPosition.avgEntryPrice, 2)}</p>
+                )}
+              </div>
+            </Card2>
           </div>
         </CardContent>
       </Card>
     </DashboardWrapper>
   );
+}
+
+
+function Description({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <p className={cn("text-xs font-medium text-muted-foreground", className)}>{children}</p>
+  );
+}
+
+function Value({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("text-xs tracking-tight text-foreground", className)}>{children}</div>
+  );
+}
+
+function Card2({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn('space-y-0 flex', className)}>
+      {children}
+    </div>
+  )
 }
