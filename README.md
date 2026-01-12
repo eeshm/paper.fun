@@ -57,3 +57,41 @@ If a schema violates these → it’s wrong.
 - [ ] Add WebSocket real-time price streaming
 - [ ] Set up monitoring/alerting for worker health
 - [ ] Cache price feed IDs in Redis for faster startup
+
+
+
+// implement fees slider and based of that calculate the total amount to be paid
+// remove the hardcode fees from 0.1%\
+
+
+
+
+v1 (Live)
+- Fixed 0.1% fee simulation
+- Spot SOL trading
+- Leaderboards & tutorials
+- Wallet-based identity
+
+v2
+
+- Jupiter-powered routing
+- Dynamic fees & slippage
+- Multi-hop swaps
+- Trade replay & analysis
+
+v3 (Future)
+- Perps simulation
+- NFT paper trading
+- Copy trading & bot testing
+- This is a clean, fundable roadmap.
+
+
+
+## Names
+SolPlay 
+SolQuest 
+PreFlight 
+Slipstream 
+SolLab 
+DryRun 
+SolArena 

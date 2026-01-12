@@ -62,7 +62,7 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background">
-        <div className="w-full px-4 h-12 flex items-center justify-between">
+        <div className="w-full px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-sm font-medium tracking-tight text-foreground">Paper Trading</h1>
             <div className={`px-2 py-0.5 rounded text-[10px] font-medium ${wsConnected
@@ -92,7 +92,7 @@ export default function Home() {
             {/* <OrderHistory orders={tradingStore.orders} /> */}
             <OrderHistory />
           </div>
-          <div className="lg:col-span-3 h-[450px]">
+          <div className="lg:col-span-3 h-[200px] lg:h-[450px]">
             <PortfolioSummary
               balances={tradingStore.balances}
               positions={tradingStore.positions}
