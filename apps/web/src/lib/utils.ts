@@ -5,13 +5,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatNumber(num: string | number, decimals: number = 2): string {
+export function formatNumber(num: string | number | undefined | null, decimals: number = 2): string {
+  if (num === undefined || num === null || num === '') {
+    return (0).toFixed(decimals);
+  }
   const numVal = typeof num === 'string' ? parseFloat(num) : num;
+  if (isNaN(numVal) || !isFinite(numVal)) {
+    return (0).toFixed(decimals);
+  }
   return numVal.toFixed(decimals);
 }
 
-export function formatCurrency(amount: string | number): string {
+export function formatCurrency(amount: string | number | undefined | null): string {
+  if (amount === undefined || amount === null || amount === '') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(0);
+  }
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(num) || !isFinite(num)) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(0);
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',

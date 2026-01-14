@@ -45,6 +45,7 @@ const Button = React.forwardRef<
           className
         )}
         ref={ref}
+        suppressHydrationWarning
         {...props}
       />
     );

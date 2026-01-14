@@ -104,19 +104,19 @@ class ApiClient {
   }
 
   async getOrders(): Promise<Order[]> {
-    const response = await this.client.get<Order[]>('/orders');
-    return response.data;
+    const response = await this.client.get<{ success: boolean; orders: Order[] }>('/orders');
+    return response.data.orders;
   }
 
   async getOrder(orderId: number): Promise<Order> {
-    const response = await this.client.get<Order>(`/orders/${orderId}`);
-    return response.data;
+    const response = await this.client.get<{ success: boolean; order: Order }>(`/orders/${orderId}`);
+    return response.data.order;
   }
 
   // Portfolio endpoints
   async getPortfolio(): Promise<Portfolio> {
-    const response = await this.client.get<Portfolio>('/portfolio');
-    return response.data;
+    const response = await this.client.get<{ success: boolean; portfolio: Portfolio }>('/portfolio');
+    return response.data.portfolio;
   }
 
   // Market endpoints

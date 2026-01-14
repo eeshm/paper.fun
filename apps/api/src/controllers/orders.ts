@@ -177,9 +177,23 @@ export async function getUserOrdersHandler(
         .json({ success: false, error: "No orders found for user" });
       return;
     }
+    // Transform database orders to match frontend Order type (id -> orderId, add executedPrice/Size)
+    const transformedOrders = orders.map((order) => ({
+      orderId: order.id,
+      side: order.side,
+      status: order.status,
+      baseAsset: order.baseAsset,
+      quoteAsset: order.quoteAsset,
+      requestedSize: order.requestedSize.toString(),
+      executedPrice: order.priceAtOrderTime.toString(),
+      executedSize: order.requestedSize.toString(), // For market orders, executed = requested
+      feesApplied: order.feesApplied.toString(),
+      createdAt: order.createdAt.toISOString(),
+      updatedAt: order.updatedAt.toISOString(),
+    }));
     res.status(200).json({
       success: true,
-      orders,
+      orders: transformedOrders,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

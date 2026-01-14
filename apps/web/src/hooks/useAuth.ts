@@ -81,7 +81,6 @@ export function useAuth() {
       
       // Store auth state
       setUser(user, loginResponse.token);
-      console.log('Auth state updated - user:', loginResponse.user, 'token:', !!loginResponse.token);
       toast.success('Logged in successfully!');
 
       return loginResponse;
