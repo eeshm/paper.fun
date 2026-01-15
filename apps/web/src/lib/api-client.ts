@@ -99,8 +99,36 @@ class ApiClient {
 
   // Order endpoints
   async placeOrder(request: PlaceOrderRequest): Promise<Order> {
-    const response = await this.client.post<Order>('/orders', request);
-    return response.data;
+    const response = await this.client.post<{ 
+      success: boolean; 
+      orderId: number; 
+      executedSize: string; 
+      executedPrice: string; 
+      feesApplied: string; 
+      status: string;
+      createdAt?: string;
+      updatedAt?: string;
+    }>('/orders', request);
+    
+    // API returns partial order data, merge with request data
+    const { success, ...apiOrderData } = response.data;
+    
+    // Build complete order object with request data
+    const order: Order = {
+      orderId: apiOrderData.orderId,
+      side: request.side,
+      status: apiOrderData.status as 'pending' | 'filled' | 'rejected',
+      baseAsset: request.baseAsset,
+      quoteAsset: request.quoteAsset,
+      requestedSize: request.requestedSize,
+      executedPrice: apiOrderData.executedPrice,
+      executedSize: apiOrderData.executedSize,
+      feesApplied: apiOrderData.feesApplied,
+      createdAt: apiOrderData.createdAt || new Date().toISOString(),
+      updatedAt: apiOrderData.updatedAt || new Date().toISOString(),
+    };
+    
+    return order;
   }
 
   async getOrders(): Promise<Order[]> {
@@ -116,6 +144,7 @@ class ApiClient {
   // Portfolio endpoints
   async getPortfolio(): Promise<Portfolio> {
     const response = await this.client.get<{ success: boolean; portfolio: Portfolio }>('/portfolio');
+    console.log('getPortfolio raw response:', response.data);
     return response.data.portfolio;
   }
 

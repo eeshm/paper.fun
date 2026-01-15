@@ -15,8 +15,15 @@ import { OrderHistory } from '@/components/dashboard/order-history';
 export default function Home() {
   const router = useRouter();
   const { isAuthenticated, token } = useAuth();
-  const { setBalances, setPositions, setOrders } = useTradingStore();
-  const tradingStore = useTradingStore();
+  const setBalances = useTradingStore((state) => state.setBalances);
+  const setPositions = useTradingStore((state) => state.setPositions);
+  const setOrders = useTradingStore((state) => state.setOrders);
+
+  // Subscribe to individual state values for proper reactivity
+  const orders = useTradingStore((state) => state.orders);
+  const balances = useTradingStore((state) => state.balances);
+  const positions = useTradingStore((state) => state.positions);
+  const prices = useTradingStore((state) => state.prices);
 
   // WebSocket is always enabled for prices, token is optional for auth
   const { isConnected: wsConnected, subscribe } = useWebSocket({
@@ -86,7 +93,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Top Row: Chart (Left 3/4) and Order Form (Right 1/4) */}
           <div className="lg:col-span-9 min-h-[600px]">
-            <PriceChart prices={tradingStore.prices} />
+            <PriceChart prices={prices} />
           </div>
           <div className="lg:col-span-3 ">
             <OrderForm />
@@ -94,12 +101,12 @@ export default function Home() {
 
           {/* Bottom Row: Order History (Left 3/4) and Portfolio Summary (Right 1/4) */}
           <div className="lg:col-span-9 h-[450px]">
-            <OrderHistory orders={Array.isArray(tradingStore.orders) ? tradingStore.orders : []} />
+            <OrderHistory orders={orders} />
           </div>
           <div className="lg:col-span-3 h-[200px] lg:h-[450px]">
             <PortfolioSummary
-              balances={Array.isArray(tradingStore.balances) ? tradingStore.balances : []}
-              positions={Array.isArray(tradingStore.positions) ? tradingStore.positions : []}
+              balances={balances}
+              positions={positions}
               className="h-full"
             />
           </div>

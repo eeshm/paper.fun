@@ -27,7 +27,7 @@ export function OrderForm() {
   const [size, setSize] = useState('');
   const [currency, setCurrency] = useState<'SOL' | 'USDC'>('SOL');
   const [isLoading, setIsLoading] = useState(false);
-  const { addOrder, prices, balances } = useTradingStore();
+  const { addOrder, prices, balances, setBalances, setPositions } = useTradingStore();
   const { connected } = useWallet();
   const { login } = useAuth();
 
@@ -63,6 +63,7 @@ export function OrderForm() {
 
     setIsLoading(true);
     try {
+      console.log('Placing order:', { side, solAmount });
       const order = await apiClient.placeOrder({
         side,
         baseAsset: 'SOL',
@@ -70,9 +71,21 @@ export function OrderForm() {
         requestedSize: solAmount.toString(),
       });
 
+      console.log('Order placed:', order);
       addOrder(order);
       toast.success(`${side.toUpperCase()} order placed!`);
       setSize('');
+
+      // Refresh portfolio after order to update balances
+      console.log('Refreshing portfolio...');
+      try {
+        const portfolio = await apiClient.getPortfolio();
+        console.log('Portfolio refreshed:', portfolio);
+        setBalances(portfolio.balances);
+        setPositions(portfolio.positions);
+      } catch (portfolioError) {
+        console.error('Failed to refresh portfolio:', portfolioError);
+      }
     } catch (error) {
       console.error('Order failed:', error);
       toast.error('Failed to place order');
@@ -220,7 +233,7 @@ export function OrderForm() {
                 type="submit"
                 disabled={isLoading || !size || hasInsufficientFunds}
                 className={`w-full rounded-xs ${hasInsufficientFunds
-                  ? 'bg-gray-500 hover:bg-gray-500 cursor-not-allowed'
+                  ? `cursor-not-allowed pointer-events-none   ${side === 'buy' ? 'bg-green-600' : 'bg-red-600'}`
                   : side === 'buy'
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-red-600 hover:bg-red-700'

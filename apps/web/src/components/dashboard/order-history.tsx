@@ -32,7 +32,7 @@ function OrderRow({ order, isBuy }: OrderRowProps) {
       <div className='text-xs space-y-1 text-muted-foreground pl-0'>
         <div className='flex justify-between'>
           <span>Size:</span>
-          <span className='text-foreground'>{formatNumber(order.requestedSize, 4)} SOL</span>
+          <span className='text-foreground'>{formatNumber(order.requestedSize, 6)} SOL</span>
         </div>
         <div className='flex justify-between'>
           <span>Price:</span>
@@ -50,7 +50,9 @@ function OrderRow({ order, isBuy }: OrderRowProps) {
 export function OrderHistory({ orders }: OrderHistoryProps) {
   // Defensive check: ensure orders is an array
   const safeOrders = Array.isArray(orders) ? orders : [];
-  
+
+  console.log('OrderHistory rendering with orders:', safeOrders.map(o => ({ orderId: o.orderId, side: o.side })));
+
   return (
     <DashboardWrapper name="Order History" className="h-full">
       <Card className="h-full border-0 shadow-none overflow-hidden flex flex-col">
