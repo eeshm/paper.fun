@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useTradingStore } from '@/store/trading';
+import { env } from '@/lib/env';
 import {
   WSMessage,
   WSPriceMessage,
@@ -20,11 +21,12 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
   const reconnectDelay = useRef(1000);
+  const [isConnected, setIsConnected] = useState(false);
 
   const tradingStore = useTradingStore();
   const subscriptions = useRef<Set<WSChannel>>(new Set());
 
-  const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
+  const WS_URL = env.WS_URL;
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {
@@ -88,6 +90,10 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
     [tradingStore]
   );
 
+  // Use ref to avoid stale closure in WebSocket handlers
+  const handleMessageRef = useRef(handleMessage);
+  handleMessageRef.current = handleMessage;
+
   const connect = useCallback(() => {
     // Prevent multiple simultaneous connections
     if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
@@ -105,6 +111,7 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
 
       ws.onopen = () => {
         console.log('WebSocket connected');
+        setIsConnected(true);
         reconnectAttempts.current = 0;
         reconnectDelay.current = 1000;
 
@@ -131,7 +138,7 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
         });
       };
 
-      ws.onmessage = handleMessage;
+      ws.onmessage = (event) => handleMessageRef.current(event);
 
       ws.onerror = (error) => {
         // Only log errors, don't show toast for already-closed connections
@@ -146,6 +153,7 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
       ws.onclose = (event) => {
         console.log('WebSocket disconnected', { code: event.code, reason: event.reason, wasClean: event.wasClean });
         wsRef.current = null;
+        setIsConnected(false);
 
         // Only show error toast for unexpected closures (not code 1000 = normal closure)
         // Code 1006 (abnormal closure) is common and will be handled by reconnection
@@ -174,7 +182,7 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
       console.error('Failed to connect WebSocket:', error);
       toast.error('Failed to connect to WebSocket server');
     }
-  }, [enabled, token, WS_URL]); // Removed handleMessage from deps to prevent reconnections
+  }, [enabled, token, WS_URL]); // handleMessage uses ref pattern to avoid stale closures
 
   const disconnect = useCallback(() => {
     if (wsRef.current) {
@@ -235,7 +243,7 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
   }, [enabled, ping]);
 
   return {
-    isConnected: wsRef.current?.readyState === WebSocket.OPEN,
+    isConnected,
     send,
     subscribe,
     unsubscribe,

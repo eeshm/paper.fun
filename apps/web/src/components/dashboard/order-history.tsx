@@ -51,8 +51,6 @@ export function OrderHistory({ orders }: OrderHistoryProps) {
   // Defensive check: ensure orders is an array
   const safeOrders = Array.isArray(orders) ? orders : [];
 
-  console.log('OrderHistory rendering with orders:', safeOrders.map(o => ({ orderId: o.orderId, side: o.side })));
-
   return (
     <DashboardWrapper name="Order History" className="h-full">
       <Card className="h-full border-0 shadow-none overflow-hidden flex flex-col">

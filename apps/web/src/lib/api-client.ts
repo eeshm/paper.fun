@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { env } from './env';
 import {
   AuthNonceRequest,
   AuthNonceResponse,
@@ -11,7 +12,7 @@ import {
   MarketStatus,
 } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = env.API_URL;
 
 class ApiClient {
   private client: AxiosInstance;
@@ -144,7 +145,6 @@ class ApiClient {
   // Portfolio endpoints
   async getPortfolio(): Promise<Portfolio> {
     const response = await this.client.get<{ success: boolean; portfolio: Portfolio }>('/portfolio');
-    console.log('getPortfolio raw response:', response.data);
     return response.data.portfolio;
   }
 

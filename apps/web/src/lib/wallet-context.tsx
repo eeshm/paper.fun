@@ -9,7 +9,8 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
 import { clusterApiUrl } from '@solana/web3.js';
-import '@solana/wallet-adapter-react-ui/styles.css';
+import { env } from './env';
+// import '@solana/wallet-adapter-react-ui/styles.css';
 
 
 interface WalletContextProviderProps {
@@ -19,8 +20,8 @@ interface WalletContextProviderProps {
 export function WalletContextProvider({
   children,
 }: WalletContextProviderProps) {
-  const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet';
-  const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(network as any);
+  const network = env.SOLANA_NETWORK;
+  const endpoint = env.SOLANA_RPC_URL || clusterApiUrl(network as any);
 
   const wallets = [
     new PhantomWalletAdapter(),

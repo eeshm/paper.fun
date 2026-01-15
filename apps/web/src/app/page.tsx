@@ -1,7 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTradingStore } from '@/store/trading';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -11,10 +10,13 @@ import { PortfolioSummary } from '@/components/dashboard/portfolio-summary';
 import { PriceChart } from '@/components/dashboard/price-chart';
 import { OrderForm } from '@/components/dashboard/order-form';
 import { OrderHistory } from '@/components/dashboard/order-history';
+import { PortfolioSkeleton, OrderHistorySkeleton } from '@/components/ui/skeleton';
+import { ChartErrorBoundary } from '@/components/error-boundary';
 
 export default function Home() {
-  const router = useRouter();
   const { isAuthenticated, token } = useAuth();
+  const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(false);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const setBalances = useTradingStore((state) => state.setBalances);
   const setPositions = useTradingStore((state) => state.setPositions);
   const setOrders = useTradingStore((state) => state.setOrders);
@@ -35,21 +37,27 @@ export default function Home() {
   useEffect(() => {
     if (isAuthenticated && token) {
       const loadPortfolio = async () => {
+        setIsLoadingPortfolio(true);
         try {
           const portfolio = await apiClient.getPortfolio();
           setBalances(portfolio.balances);
           setPositions(portfolio.positions);
         } catch (error) {
           console.error('Failed to load portfolio:', error);
+        } finally {
+          setIsLoadingPortfolio(false);
         }
       };
 
       const loadOrders = async () => {
+        setIsLoadingOrders(true);
         try {
           const fetchedOrders = await apiClient.getOrders();
           setOrders(fetchedOrders);
         } catch (error) {
           console.error('Failed to load orders:', error);
+        } finally {
+          setIsLoadingOrders(false);
         }
       };
 
@@ -93,7 +101,9 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Top Row: Chart (Left 3/4) and Order Form (Right 1/4) */}
           <div className="lg:col-span-9 min-h-[600px]">
-            <PriceChart prices={prices} />
+            <ChartErrorBoundary>
+              <PriceChart prices={prices} />
+            </ChartErrorBoundary>
           </div>
           <div className="lg:col-span-3 ">
             <OrderForm />
@@ -101,14 +111,22 @@ export default function Home() {
 
           {/* Bottom Row: Order History (Left 3/4) and Portfolio Summary (Right 1/4) */}
           <div className="lg:col-span-9 h-[450px]">
-            <OrderHistory orders={orders} />
+            {isLoadingOrders ? (
+              <OrderHistorySkeleton />
+            ) : (
+              <OrderHistory orders={orders} />
+            )}
           </div>
           <div className="lg:col-span-3 h-[200px] lg:h-[450px]">
-            <PortfolioSummary
-              balances={balances}
-              positions={positions}
-              className="h-full"
-            />
+            {isLoadingPortfolio ? (
+              <PortfolioSkeleton />
+            ) : (
+              <PortfolioSummary
+                balances={balances}
+                positions={positions}
+                className="h-full"
+              />
+            )}
           </div>
         </div>
       </main>

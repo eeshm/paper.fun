@@ -4,6 +4,7 @@ import React from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAuth } from "../hooks/useAuth";
+import { useTradingStore } from '@/store/trading';
 import { Button } from './ui/button';
 import { LogOut, Copy, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,6 +26,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
   const { connected, publicKey, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
   const { isAuthenticated, logout } = useAuth();
+  const resetTradingStore = useTradingStore((state) => state.reset);
 
   const copyAddress = () => {
     if (publicKey) {
@@ -36,6 +38,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
   const handleDisconnect = async () => {
     await disconnect();
     logout();
+    resetTradingStore(); // Clear trading data on disconnect
   };
 
   if (!connected) {

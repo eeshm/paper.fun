@@ -34,8 +34,6 @@ export function OrderForm() {
   // Subscribe directly to auth store for proper reactivity
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  console.log('OrderForm render - connected:', connected, 'isAuthenticated:', isAuthenticated);
-
   // Defensive check: ensure balances is an array
   const safeBalances = Array.isArray(balances) ? balances : [];
   const usdcBalance = safeBalances.find((b) => b.asset === 'USDC');
@@ -63,7 +61,6 @@ export function OrderForm() {
 
     setIsLoading(true);
     try {
-      console.log('Placing order:', { side, solAmount });
       const order = await apiClient.placeOrder({
         side,
         baseAsset: 'SOL',
@@ -71,16 +68,13 @@ export function OrderForm() {
         requestedSize: solAmount.toString(),
       });
 
-      console.log('Order placed:', order);
       addOrder(order);
       toast.success(`${side.toUpperCase()} order placed!`);
       setSize('');
 
       // Refresh portfolio after order to update balances
-      console.log('Refreshing portfolio...');
       try {
         const portfolio = await apiClient.getPortfolio();
-        console.log('Portfolio refreshed:', portfolio);
         setBalances(portfolio.balances);
         setPositions(portfolio.positions);
       } catch (portfolioError) {
@@ -124,7 +118,7 @@ export function OrderForm() {
         <CardContent className="h-full overflow-y-auto">
           <form onSubmit={handleSubmit} className="space-y-3">
             {/* Side Selection */}
-            <div className="flex bg-card p-[2px]">
+            <div className="flex bg-card p-0.5">
               <Button
                 type="button"
                 variant={side === 'buy' ? 'default' : 'outline'}
