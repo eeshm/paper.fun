@@ -1,6 +1,6 @@
 'use client';
 
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import {
   ConnectionProvider,
   WalletProvider,
@@ -10,7 +10,7 @@ import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
 import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
 import { clusterApiUrl } from '@solana/web3.js';
 import { env } from './env';
-// import '@solana/wallet-adapter-react-ui/styles.css';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 
 interface WalletContextProviderProps {
@@ -23,10 +23,14 @@ export function WalletContextProvider({
   const network = env.SOLANA_NETWORK;
   const endpoint = env.SOLANA_RPC_URL || clusterApiUrl(network as any);
 
-  const wallets = [
-    new PhantomWalletAdapter(),
-    new SolflareWalletAdapter(),
-  ];
+  // Memoize wallets to prevent duplicate adapter instances on re-renders
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+    ],
+    []
+  );
 
   return (
     <ConnectionProvider endpoint={endpoint}>

@@ -6,7 +6,7 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAuth } from "../hooks/useAuth";
 import { useTradingStore } from '@/store/trading';
 import { Button } from './ui/button';
-import { LogOut, Copy, Wallet } from 'lucide-react';
+import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
