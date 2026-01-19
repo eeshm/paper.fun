@@ -9,6 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@repo/db": "*",
     "@repo/redis": "*",
     "@repo/pricing": "*",
     "@repo/events": "*",

@@ -44,9 +44,23 @@ export interface PortfolioUpdateEvent {
   timestamp: string;
 }
 
+export interface CandleUpdateEvent {
+  asset: string;
+  timeframe: string;
+  bucketStart: number;  // Unix timestamp in ms
+  open: string;         // Decimal string
+  high: string;
+  low: string;
+  close: string;
+  volume: string;
+  isComplete: boolean;  // true if candle is closed, false if in-progress
+  timestamp: string;
+}
+
 export type EventPayload = 
     | PriceUpdateEvent  
     | OrderFilledEvent
     | OrderRejectedEvent
-    | PortfolioUpdateEvent;
+    | PortfolioUpdateEvent
+    | CandleUpdateEvent;
     

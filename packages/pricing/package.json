@@ -12,8 +12,8 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/redis":"*"
-
+    "@repo/db": "*",
+    "@repo/redis": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

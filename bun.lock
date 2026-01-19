@@ -193,6 +193,7 @@
       "name": "@repo/pricing",
       "version": "0.1.0",
       "dependencies": {
+        "@repo/db": "*",
         "@repo/redis": "*",
       },
       "devDependencies": {
@@ -269,6 +270,7 @@
       "name": "price-ingestion-worker",
       "version": "0.1.0",
       "dependencies": {
+        "@repo/db": "*",
         "@repo/events": "*",
         "@repo/pricing": "*",
         "@repo/redis": "*",

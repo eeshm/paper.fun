@@ -7,7 +7,7 @@ import { PriceData } from '@/types';
 import { DashboardWrapper } from '@/components/dashboard-wrapper';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CandlestickChart, AreaChart } from 'lucide-react';
+import { CandlestickChart, AreaChart, Loader2 } from 'lucide-react';
 
 interface PriceChartProps {
   prices: { [symbol: string]: PriceData };
@@ -15,20 +15,91 @@ interface PriceChartProps {
 
 type ChartType = 'candlestick' | 'area';
 
+// API response types
+interface CandleData {
+  bucketStart: number;
+  open: string;
+  high: string;
+  low: string;
+  close: string;
+  volume: string;
+}
+
+interface CandlesResponse {
+  success: boolean;
+  asset: string;
+  timeframe: string;
+  count: number;
+  candles: CandleData[];
+  currentCandle: CandleData | null;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 export function PriceChart({ prices }: PriceChartProps) {
   const [chartType, setChartType] = useState<ChartType>('area');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | ISeriesApi<'Area'> | null>(null);
   const priceHistoryRef = useRef<CandlestickData<Time>[]>([]);
-  const lastCandleTimeRef = useRef<number>(0);
+  const hasFetchedRef = useRef(false);
 
   const solPrice = prices['SOL']?.price || '0';
   const currentPrice = parseFloat(solPrice) || 0;
 
-  // Generate initial candlestick data (can be converted to area data)
-  const generateInitialData = useCallback(() => {
-    const basePrice = currentPrice;
+  // Fetch historical candles from API
+  const fetchCandles = useCallback(async (): Promise<CandlestickData<Time>[]> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/market/candles?asset=SOL&timeframe=1m&limit=100`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch candles: ${response.status}`);
+      }
+
+      const data: CandlesResponse = await response.json();
+
+      if (!data.success) {
+        throw new Error('API returned unsuccessful response');
+      }
+
+      // Convert API response to chart format
+      const candles: CandlestickData<Time>[] = data.candles.map(c => ({
+        time: Math.floor(c.bucketStart / 1000) as Time, // Convert ms to seconds
+        open: parseFloat(c.open),
+        high: parseFloat(c.high),
+        low: parseFloat(c.low),
+        close: parseFloat(c.close),
+      }));
+
+      // Add current open candle if available
+      if (data.currentCandle) {
+        const currentCandleTime = Math.floor(data.currentCandle.bucketStart / 1000) as Time;
+        // Only add if not already in the list
+        const exists = candles.some(c => c.time === currentCandleTime);
+        if (!exists) {
+          candles.push({
+            time: currentCandleTime,
+            open: parseFloat(data.currentCandle.open),
+            high: parseFloat(data.currentCandle.high),
+            low: parseFloat(data.currentCandle.low),
+            close: parseFloat(data.currentCandle.close),
+          });
+        }
+      }
+
+      return candles;
+    } catch (err) {
+      console.error('Error fetching candles:', err);
+      throw err;
+    }
+  }, []);
+
+  // Generate fallback data if API fails (for development)
+  const generateFallbackData = useCallback((): CandlestickData<Time>[] => {
+    const basePrice = currentPrice || 230;
     const data: CandlestickData<Time>[] = [];
     const now = Math.floor(Date.now() / 1000);
     const candleInterval = 60; // 1-minute candles
@@ -64,103 +135,129 @@ export function PriceChart({ prices }: PriceChartProps) {
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: 'hsl(70.5, 1.5%, 70.5%)',
-      },
-      grid: {
-        vertLines: { color: 'hsl(27.4, 0.6%, 27.4%)' },
-        horzLines: { color: 'hsl(27.4, 0.6%, 27.4%)' },
-      },
-      crosshair: {
-        mode: 1,
-        vertLine: {
-          color: 'hsl(44.2, 1.7%, 44.2%)',
-          width: 1,
-          style: 3,
-        },
-        horzLine: {
-          color: 'hsl(44.2, 1.7%, 44.2%)',
-          width: 1,
-          style: 3,
-        },
-      },
-      rightPriceScale: {
-        borderColor: 'hsl(27.4, 0.6%, 27.4%)',
-      },
-      timeScale: {
-        borderColor: 'hsl(27.4, 0.6%, 27.4%)',
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      handleScroll: {
-        mouseWheel: true,
-        pressedMouseMove: true,
-      },
-      handleScale: {
-        axisPressedMouseMove: true,
-        mouseWheel: true,
-        pinch: true,
-      },
-    });
+    const initChart = async () => {
+      setIsLoading(true);
+      setError(null);
 
-    const initialData = generateInitialData();
-    priceHistoryRef.current = initialData;
-    lastCandleTimeRef.current = initialData[initialData.length - 1]?.time as number || Math.floor(Date.now() / 1000);
+      // Fetch historical candles
+      let initialData: CandlestickData<Time>[];
+      try {
+        initialData = await fetchCandles();
 
-    // Create series based on chart type
-    let series: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>;
-
-    if (chartType === 'candlestick') {
-      series = chart.addSeries(CandlestickSeries, {
-        upColor: '#22c55e',
-        downColor: '#ef4444',
-        borderUpColor: '#22c55e',
-        borderDownColor: '#ef4444',
-        wickUpColor: '#22c55e',
-        wickDownColor: '#ef4444',
-      });
-      series.setData(initialData);
-    } else {
-      series = chart.addSeries(AreaSeries, {
-        lineColor: '#3b82f6',
-        topColor: 'rgba(59, 130, 246, 0.4)',
-        bottomColor: 'rgba(59, 130, 246, 0.0)',
-        lineWidth: 2,
-      });
-      series.setData(convertToAreaData(initialData));
-    }
-
-    chart.timeScale().fitContent();
-
-    chartRef.current = chart;
-    seriesRef.current = series;
-
-    // Handle resize
-    const handleResize = () => {
-      if (chartContainerRef.current && chartRef.current) {
-        chartRef.current.applyOptions({
-          width: chartContainerRef.current.clientWidth,
-          height: chartContainerRef.current.clientHeight,
-        });
+        // If no candles from API yet, use fallback
+        if (initialData.length === 0) {
+          console.log('No candles from API yet, using fallback data');
+          initialData = generateFallbackData();
+        }
+      } catch (err) {
+        console.warn('Using fallback data due to API error:', err);
+        setError('Using simulated data - candle history will appear once available');
+        initialData = generateFallbackData();
       }
+
+      priceHistoryRef.current = initialData;
+
+      const chart = createChart(chartContainerRef.current!, {
+        layout: {
+          background: { type: ColorType.Solid, color: 'transparent' },
+          textColor: 'hsl(70.5, 1.5%, 70.5%)',
+        },
+        grid: {
+          vertLines: { color: 'hsl(27.4, 0.6%, 27.4%)' },
+          horzLines: { color: 'hsl(27.4, 0.6%, 27.4%)' },
+        },
+        crosshair: {
+          mode: 1,
+          vertLine: {
+            color: 'hsl(44.2, 1.7%, 44.2%)',
+            width: 1,
+            style: 3,
+          },
+          horzLine: {
+            color: 'hsl(44.2, 1.7%, 44.2%)',
+            width: 1,
+            style: 3,
+          },
+        },
+        rightPriceScale: {
+          borderColor: 'hsl(27.4, 0.6%, 27.4%)',
+        },
+        timeScale: {
+          borderColor: 'hsl(27.4, 0.6%, 27.4%)',
+          timeVisible: true,
+          secondsVisible: false,
+        },
+        handleScroll: {
+          mouseWheel: true,
+          pressedMouseMove: true,
+        },
+        handleScale: {
+          axisPressedMouseMove: true,
+          mouseWheel: true,
+          pinch: true,
+        },
+      });
+
+      // Create series based on chart type
+      let series: ISeriesApi<'Candlestick'> | ISeriesApi<'Area'>;
+
+      if (chartType === 'candlestick') {
+        series = chart.addSeries(CandlestickSeries, {
+          upColor: '#22c55e',
+          downColor: '#ef4444',
+          borderUpColor: '#22c55e',
+          borderDownColor: '#ef4444',
+          wickUpColor: '#22c55e',
+          wickDownColor: '#ef4444',
+        });
+        series.setData(initialData);
+      } else {
+        series = chart.addSeries(AreaSeries, {
+          lineColor: '#3b82f6',
+          topColor: 'rgba(59, 130, 246, 0.4)',
+          bottomColor: 'rgba(59, 130, 246, 0.0)',
+          lineWidth: 2,
+        });
+        series.setData(convertToAreaData(initialData));
+      }
+
+      chart.timeScale().fitContent();
+
+      chartRef.current = chart;
+      seriesRef.current = series;
+      setIsLoading(false);
+
+      // Handle resize
+      const handleResize = () => {
+        if (chartContainerRef.current && chartRef.current) {
+          chartRef.current.applyOptions({
+            width: chartContainerRef.current.clientWidth,
+            height: chartContainerRef.current.clientHeight,
+          });
+        }
+      };
+
+      const resizeObserver = new ResizeObserver(handleResize);
+      resizeObserver.observe(chartContainerRef.current!);
+
+      return () => {
+        resizeObserver.disconnect();
+        chart.remove();
+        chartRef.current = null;
+        seriesRef.current = null;
+      };
     };
 
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(chartContainerRef.current);
+    const cleanup = initChart();
 
     return () => {
-      resizeObserver.disconnect();
-      chart.remove();
-      chartRef.current = null;
-      seriesRef.current = null;
+      cleanup.then(cleanupFn => cleanupFn?.());
     };
-  }, [generateInitialData, chartType, convertToAreaData]);
+  }, [fetchCandles, generateFallbackData, chartType, convertToAreaData]);
 
-  // Update chart with new price data
+  // Update chart with new price data from WebSocket
   useEffect(() => {
-    if (!seriesRef.current || currentPrice === 0) return;
+    if (!seriesRef.current || currentPrice === 0 || isLoading) return;
 
     const now = Math.floor(Date.now() / 1000);
     const candleInterval = 60;
@@ -208,7 +305,7 @@ export function PriceChart({ prices }: PriceChartProps) {
         });
       }
     }
-  }, [currentPrice, chartType]);
+  }, [currentPrice, chartType, isLoading]);
 
   const priceChange = priceHistoryRef.current.length > 1
     ? currentPrice - (priceHistoryRef.current[0]?.open || currentPrice)
@@ -251,8 +348,19 @@ export function PriceChart({ prices }: PriceChartProps) {
               </Button>
             </div>
           </div>
-          <span className="text-xs text-muted-foreground mb-2 shrink-0">Real-time price via Pyth</span>
-          <div ref={chartContainerRef} className="flex-1 w-full min-h-0 min-w-0" />
+          <div className="flex items-center gap-2 mb-2 shrink-0">
+            <span className="text-xs text-muted-foreground">Real-time price via Pyth</span>
+            {error && (
+              <span className="text-xs text-yellow-500">{error}</span>
+            )}
+          </div>
+          <div ref={chartContainerRef} className="flex-1 w-full min-h-0 min-w-0 relative">
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </DashboardWrapper>

@@ -13,6 +13,7 @@ export type {
   OrderFilledEvent,
   OrderRejectedEvent,
   PortfolioUpdateEvent,
+  CandleUpdateEvent,
   EventPayload,
 } from "./types.js";
 
@@ -22,4 +23,5 @@ export {
   publishOrderFilled,
   publishOrderRejected,
   publishPortfolioUpdate,
+  publishCandleUpdate,
 } from "./publish.js";

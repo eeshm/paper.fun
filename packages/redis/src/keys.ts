@@ -17,6 +17,14 @@ const PRICE = {
   tokenPrice: (tokenSymbol: string) => `${APP}:price:${tokenSymbol}`,
 };
 
+// Candles Domain (for OHLC candle caching)
+const CANDLES = {
+  // Current open candle (not yet persisted to DB)
+  currentCandle: (asset: string, timeframe: string) => `${APP}:candles:current:${asset}:${timeframe}`,
+  // Last bucket timestamp (for tracking minute boundaries)
+  lastBucket: (asset: string, timeframe: string) => `${APP}:candles:lastbucket:${asset}:${timeframe}`,
+};
+
 // WebSocket Domain
 const WEBSOCKET = {
   userSession: (walletAddress: string) => `${APP}:ws:user:${walletAddress}`,
@@ -25,9 +33,10 @@ const WEBSOCKET = {
 
 // Rate Limiting Domain
 const RATELIMIT = {
-    walletRequests : (walletAddress: string)=> `${APP}:ratelimit:wallet:${walletAddress}`,
-    apiRequests : (apiRequestId: string) => `${APP}:ratelimit:api:${apiRequestId}`,
+  walletRequests: (walletAddress: string) => `${APP}:ratelimit:wallet:${walletAddress}`,
+  apiRequests: (apiRequestId: string) => `${APP}:ratelimit:api:${apiRequestId}`,
 };
+
 // Trading Domain
 const TRADING = {
   userPortfolio: (walletAddress: string) => `${APP}:trading:portfolio:${walletAddress}`,
@@ -64,10 +73,14 @@ const CHANNELS = {
   
   // Portfolio updates (published after balance/position changes)
   portfolioUpdate: () => `${APP}:events:portfolio:update`,
+  
+  // Candle updates (published by candle aggregation worker)
+  candleUpdate: () => `${APP}:events:candle:update`,
 };
 
 export const redisKeys = {
   PRICE,
+  CANDLES,
   WEBSOCKET,
   RATELIMIT,
   TRADING,
@@ -91,5 +104,7 @@ export const redisKeys = {
  * 
  * // Store session
  * const sessionKey = redisKeys.SESSION.userSession("session_abc123");
+ * 
+ * // Current open candle
+ * const candleKey = redisKeys.CANDLES.currentCandle("SOL", "1m");
  */
- 

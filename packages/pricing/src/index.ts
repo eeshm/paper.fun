@@ -35,3 +35,16 @@ export {
   seedDevelopmentPrices, 
   seedTestPrice,
 } from './seed.js';
+
+// Candle aggregation
+export {
+  type OHLCCandle,
+  type Timeframe,
+  TIMEFRAME_MS,
+  getBucketStart,
+  getCurrentCandle,
+  persistCandle,
+  processPriceTick,
+  getHistoricalCandles,
+  getLatestCandles,
+} from './candles.js';

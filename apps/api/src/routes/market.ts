@@ -4,6 +4,7 @@ import {
   getAllPricesHandler,
   getMarketStatusHandler,
 } from "../controllers/market.ts";
+import { getCandlesHandler } from "../controllers/candles.ts";
 import { publicRateLimiter } from "../middlewares/index.ts";
 
 
@@ -16,6 +17,7 @@ router.use(publicRateLimiter);
  * GET /market/price/:symbol - Get price for a specific symbol (e.g., SOL)
  * GET /market/prices        - Get prices for all supported symbols
  * GET /market/status        - Get market data availability status
+ * GET /market/candles       - Get historical OHLC candles for charting
  */
 
 // GET /market/price/:symbol - Single symbol price
@@ -27,4 +29,8 @@ router.get("/prices", getAllPricesHandler);
 // GET /market/status - Market health status
 router.get("/status", getMarketStatusHandler);
 
+// GET /market/candles - Historical OHLC candles
+router.get("/candles", getCandlesHandler);
+
 export default router;
+

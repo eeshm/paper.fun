@@ -155,3 +155,25 @@ model Positions {
   @@index([userId])
   @@map("positions")
 }
+
+/**
+ * Candles: OHLC price candles for charting
+ * Aggregated from price ticks by the candle worker
+ * Primary key ensures idempotency (no duplicate candles)
+ */
+model Candles {
+  id          Int       @id @default(autoincrement())
+  asset       String    @db.VarChar(20)
+  timeframe   String    @db.VarChar(10)       // '1m', '5m', '15m', '1h', etc.
+  bucketStart DateTime  @map("bucket_start")  // Start of the candle period
+  open        Decimal   @db.Decimal(20, 8)
+  high        Decimal   @db.Decimal(20, 8)
+  low         Decimal   @db.Decimal(20, 8)
+  close       Decimal   @db.Decimal(20, 8)
+  volume      Decimal   @db.Decimal(20, 8) @default(0)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  @@unique([asset, timeframe, bucketStart])
+  @@index([asset, timeframe, bucketStart])
+  @@map("candles")
+}

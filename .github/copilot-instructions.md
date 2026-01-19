@@ -183,12 +183,12 @@ Price worker publishes to Redis
 - **@repo/redis**: Client, health checks, keys, pub/sub channels
 - **@repo/auth**: Wallet signature verification, sessions, nonces
 - **@repo/trading**: Orders, positions, portfolio, row-level locking
-- **@repo/pricing**: Price get/set/seed from Redis
-- **@repo/events**: Pub/sub publishing (price, order, portfolio)
+- **@repo/pricing**: Price get/set/seed from Redis, OHLC candle aggregation
+- **@repo/events**: Pub/sub publishing (price, order, portfolio, candle)
 - **@repo/env**: Zod-validated environment config
 - **apps/api**: REST API with all endpoints, rate limiting, validation
 - **apps/ws**: WebSocket server with real-time updates
-- **workers/price-ingestion**: Pyth network price feed
+- **workers/price-ingestion**: Pyth network price feed + candle aggregation
 - **Security**: Rate limiting, input validation (Zod), Helmet, CORS
 - **Graceful shutdown**: Handle SIGTERM, drain connections
 - **Tests**: 89 E2E tests (auth, trading, concurrency, P&L, WebSocket)
@@ -228,6 +228,7 @@ Price worker publishes to Redis
 |--------|----------|------|-------------|
 | GET | `/market/price/:symbol` | No | Get current price |
 | GET | `/market/status` | No | Get market status |
+| GET | `/market/candles` | No | Get historical OHLC candles |
 
 ### Health
 | Method | Endpoint | Auth | Description |

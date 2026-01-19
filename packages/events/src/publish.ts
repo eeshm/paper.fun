@@ -11,6 +11,7 @@ import type {
   OrderFilledEvent,
   OrderRejectedEvent,
   PortfolioUpdateEvent,
+  CandleUpdateEvent,
 } from "./types.js";
 
 /**
@@ -25,8 +26,8 @@ export async function publish<T>(channel: string, payload: T): Promise<void> {
  * Publish price update event
  * Called by price-ingestion worker after updating Redis cache
  */
-export async function publishPriceUpdate(symbol:string, price: string): Promise<void> {
-  const event : PriceUpdateEvent={
+export async function publishPriceUpdate(symbol: string, price: string): Promise<void> {
+  const event: PriceUpdateEvent = {
     symbol,
     price,
     timestamp: new Date().toISOString(),
@@ -45,6 +46,7 @@ export async function publishOrderFilled(data: Omit<OrderFilledEvent, "timestamp
   };
   await publish(redisKeys.CHANNELS.orderFilled(), event);
 }
+
 /**
  * Publish order rejected event
  * Called by API when order is rejected
@@ -69,4 +71,18 @@ export async function publishPortfolioUpdate(
     timestamp: new Date().toISOString(),
   };
   await publish(redisKeys.CHANNELS.portfolioUpdate(), event);
+}
+
+/**
+ * Publish candle update event
+ * Called by candle aggregation worker after candle update/close
+ */
+export async function publishCandleUpdate(
+  data: Omit<CandleUpdateEvent, "timestamp">
+): Promise<void> {
+  const event: CandleUpdateEvent = {
+    ...data,
+    timestamp: new Date().toISOString(),
+  };
+  await publish(redisKeys.CHANNELS.candleUpdate(), event);
 }
