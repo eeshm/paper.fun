@@ -1,5 +1,4 @@
 import { initRedis, isRedisHealthy } from "@repo/redis";
-import { initDb, shutdownDb } from "@repo/db";
 import { fetchSolPriceFromPyth, validatePrice } from "./pyth.js";
 import { updateSolPrice } from "./update.js";
 
@@ -10,39 +9,27 @@ const PRICE_UPDATE_INTERVAL_MS = 10 * 1000; // 10 seconds
  * Main worker entry point
  *
  * Lifecycle:
- * 1. Initialize Redis and PostgreSQL connections
+ * 1. Initialize Redis connection
  * 2. Start infinite loop fetching prices every 10 seconds
  * 3. Handle graceful shutdown on SIGINT/SIGTERM
  * 4. Log status periodically
  *
  * The loop continues even on errors (resilient)
- * 
- * Database is needed for:
- * - Persisting closed OHLC candles to PostgreSQL
  */
 
 async function main() {
   console.log("[WORKER] Initializing price ingestion worker...");
 
-  // Initialize Redis (for price cache + pub/sub)
   try {
     await initRedis();
     const isHealthy = await isRedisHealthy();
     if (!isHealthy) {
       throw new Error("Redis is not healthy");
     }
+
     console.log("[WORKER] Redis initialized and healthy.");
   } catch (error) {
     console.error("[WORKER] Failed to initialize Redis:", error);
-    throw error;
-  }
-
-  // Initialize PostgreSQL (for candle persistence)
-  try {
-    await initDb();
-    console.log("[WORKER] Database initialized for candle persistence.");
-  } catch (error) {
-    console.error("[WORKER] Failed to initialize database:", error);
     throw error;
   }
 

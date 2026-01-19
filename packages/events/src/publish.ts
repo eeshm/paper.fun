@@ -26,8 +26,8 @@ export async function publish<T>(channel: string, payload: T): Promise<void> {
  * Publish price update event
  * Called by price-ingestion worker after updating Redis cache
  */
-export async function publishPriceUpdate(symbol: string, price: string): Promise<void> {
-  const event: PriceUpdateEvent = {
+export async function publishPriceUpdate(symbol:string, price: string): Promise<void> {
+  const event : PriceUpdateEvent={
     symbol,
     price,
     timestamp: new Date().toISOString(),

@@ -33,10 +33,9 @@ const WEBSOCKET = {
 
 // Rate Limiting Domain
 const RATELIMIT = {
-  walletRequests: (walletAddress: string) => `${APP}:ratelimit:wallet:${walletAddress}`,
-  apiRequests: (apiRequestId: string) => `${APP}:ratelimit:api:${apiRequestId}`,
+    walletRequests : (walletAddress: string)=> `${APP}:ratelimit:wallet:${walletAddress}`,
+    apiRequests : (apiRequestId: string) => `${APP}:ratelimit:api:${apiRequestId}`,
 };
-
 // Trading Domain
 const TRADING = {
   userPortfolio: (walletAddress: string) => `${APP}:trading:portfolio:${walletAddress}`,

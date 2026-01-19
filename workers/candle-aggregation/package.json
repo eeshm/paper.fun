@@ -1,5 +1,5 @@
 {
-  "name": "price-ingestion-worker",
+  "name": "candle-aggregation-worker",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -9,6 +9,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@repo/db": "*",
     "@repo/redis": "*",
     "@repo/pricing": "*",
     "@repo/events": "*",

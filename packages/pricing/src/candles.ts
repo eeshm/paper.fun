@@ -95,6 +95,7 @@ async function saveCurrentCandle(candle: OHLCCandle): Promise<void> {
 export async function persistCandle(candle: OHLCCandle): Promise<void> {
   const db = getDb();
   
+  
   await db.candles.upsert({
     where: {
       asset_timeframe_bucketStart: {
@@ -233,7 +234,7 @@ export async function getHistoricalCandles(
     take: limit,
   });
   
-  return candles.map((c) => ({
+  return candles.map((c:any) => ({
     asset: c.asset,
     timeframe: c.timeframe,
     bucketStart: c.bucketStart.getTime(),
@@ -272,7 +273,7 @@ export async function getLatestCandles(
   });
   
   // Reverse to get oldest-first order for charting
-  return candles.reverse().map((c) => ({
+  return candles.reverse().map((c:any) => ({
     asset: c.asset,
     timeframe: c.timeframe,
     bucketStart: c.bucketStart.getTime(),
