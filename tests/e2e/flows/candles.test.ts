@@ -7,6 +7,7 @@ import {
   getTestBucketStart 
 } from "../helpers/candles.ts";
 import type { SuperTest, Test } from "supertest";
+import { client as redis } from "@repo/redis";
 
 /**
  * Candle Aggregation E2E Tests
@@ -35,6 +36,8 @@ describe("Candle Aggregation (E2E)", () => {
     api = await getApiClient();
     // Seed initial SOL price
     await setTestPrice("SOL", "100.00");
+    // Clear any leftover candle state from previous runs
+    await redis.del("trading:candles:current:SOL:1m");
   });
 
   afterAll(async () => {
@@ -54,6 +57,7 @@ describe("Candle Aggregation (E2E)", () => {
       expect(parseFloat(result.currentCandle.high)).toBe(150.50);
       expect(parseFloat(result.currentCandle.low)).toBe(150.50);
       expect(parseFloat(result.currentCandle.close)).toBe(150.50);
+      // First tick after clearing cache should not close anything
       expect(result.candleClosed).toBe(false);
     });
 
@@ -101,13 +105,15 @@ describe("Candle Aggregation (E2E)", () => {
 
   describe("Candle Closure", () => {
     test("closes candle when minute boundary is crossed", async () => {
-      // Get a unique minute for this test
+      // Clear state and use fresh timestamps
+      await redis.del("trading:candles:current:SOL:1m");
+      
       const minute1 = getUniqueTestTime();
       const minute2 = new Date(minute1.getTime() + 60000);
       
       // Process first tick in minute 1
       const firstResult = await processTestPriceTick("SOL", "100.00", minute1);
-      expect(firstResult.candleClosed).toBe(false); // First tick, no previous candle to close
+      expect(firstResult.candleClosed).toBe(false); // First tick after clear, no previous candle
       
       // Process tick in minute 2 - should close minute 1 candle
       const secondResult = await processTestPriceTick("SOL", "105.00", minute2);

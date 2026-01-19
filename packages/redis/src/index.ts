@@ -3,10 +3,15 @@ import { subscriber } from "./client.js";
 
 /**
  * Initialize both the main Redis client and subscriber client
+ * Idempotent - safe to call multiple times
  */
 export async function initRedis(): Promise<void> {
-  await client.connect();
-  await subscriber.connect();
+  if (!client.isOpen) {
+    await client.connect();
+  }
+  if (!subscriber.isOpen) {
+    await subscriber.connect();
+  }
 }
 
 export { default as client } from "./client.js";
