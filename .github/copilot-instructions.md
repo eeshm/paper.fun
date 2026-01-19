@@ -18,19 +18,20 @@ paper-trading/
 ├── apps/
 │   ├── api/                 # Express REST API (port 3000)
 │   ├── ws/                  # WebSocket server (port 3001)
-│   └── web/                 # Next.js frontend (port 3002) [TODO]
+│   └── web/                 # Next.js frontend (port 3002)
 ├── packages/
 │   ├── db/                  # Prisma + PostgreSQL (singleton)
 │   ├── redis/               # Redis client + keys + pub/sub
 │   ├── auth/                # Wallet signing, sessions, nonces
 │   ├── trading/             # Orders, positions, portfolio
-│   ├── pricing/             # Price cache (get/set from Redis)
+│   ├── pricing/             # Price cache + candle aggregation
 │   ├── events/              # Redis pub/sub event publishing
 │   ├── env/                 # Zod-validated environment config
 │   ├── ui/                  # Shared UI components [TODO]
 │   └── typescript-config/   # Shared TS configs
 ├── workers/
-│   └── price-ingestion/     # Pyth network price feed worker
+│   ├── price-ingestion/     # Pyth network price feed worker
+│   └── candle-aggregation/  # OHLC candle aggregation worker
 ├── tests/
 │   └── e2e/                 # 89 E2E tests (Vitest + Supertest)
 └── prisma/
@@ -48,7 +49,9 @@ bun run build             # Build all packages (turbo)
 bun run dev               # Start all dev servers
 bun run dev:api           # Start API only
 bun run dev:ws            # Start WebSocket only
-bun run dev:price         # Start price worker only
+bun run dev:price         # Start price ingestion worker
+bun run dev:candle        # Start candle aggregation worker
+bun run dev:backend       # Start API + WS + both workers
 bun run check-types       # Type check all
 bun run lint              # Lint all
 ```
@@ -180,15 +183,16 @@ Price worker publishes to Redis
 
 ### ✅ Complete
 - **@repo/db**: Prisma + PostgreSQL, migrations, singleton client
-- **@repo/redis**: Client, health checks, keys, pub/sub channels
+- **@repo/redis**: Client, subscriber, health checks, keys, pub/sub channels
 - **@repo/auth**: Wallet signature verification, sessions, nonces
 - **@repo/trading**: Orders, positions, portfolio, row-level locking
-- **@repo/pricing**: Price get/set/seed from Redis, OHLC candle aggregation
+- **@repo/pricing**: Price get/set/seed from Redis, OHLC candle aggregation logic
 - **@repo/events**: Pub/sub publishing (price, order, portfolio, candle)
 - **@repo/env**: Zod-validated environment config
 - **apps/api**: REST API with all endpoints, rate limiting, validation
 - **apps/ws**: WebSocket server with real-time updates
-- **workers/price-ingestion**: Pyth network price feed + candle aggregation
+- **workers/price-ingestion**: Pyth network price feed (publishes to Redis)
+- **workers/candle-aggregation**: OHLC candle aggregation (subscribes to price events)
 - **Security**: Rate limiting, input validation (Zod), Helmet, CORS
 - **Graceful shutdown**: Handle SIGTERM, drain connections
 - **Tests**: 89 E2E tests (auth, trading, concurrency, P&L, WebSocket)
