@@ -50,7 +50,7 @@ describe('Trading Store', () => {
 
       expect(useTradingStore.getState().balances).toEqual(mockBalances);
     });
-
+ 
     test('setBalances replaces existing balances', () => {
       const initial: Balance[] = [{ asset: 'USDC', available: '500', locked: '0' }];
       const updated: Balance[] = [{ asset: 'USDC', available: '1000', locked: '0' }];
