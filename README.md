@@ -262,3 +262,11 @@ Before you ship:
 * [ ] No wallet signing required?
 * [ ] No broken edge cases?
 * [ ] Tutorials actually guide actions?
+
+
+
+// things to look after new candle aggregation worker:
+- candle correctness
+- front-end price and candle correctness
+- frotnend tests
+-  websocket reconnecting afrer reload.

@@ -285,7 +285,7 @@ export function PriceChart({ prices }: PriceChartProps) {
     if (!seriesRef.current || currentPrice === 0 || isLoading) return;
 
     const now = Math.floor(Date.now() / 1000);
-    const candleInterval = 60;
+    const candleInterval = 30;
     const currentCandleTime = Math.floor(now / candleInterval) * candleInterval;
 
     if (priceHistoryRef.current.length === 0) return;
