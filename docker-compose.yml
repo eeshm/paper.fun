@@ -1,5 +1,5 @@
 # Production docker-compose configuration
-version: '3.8'
+
 
 services:
   postgres:

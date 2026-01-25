@@ -248,7 +248,7 @@ export async function fillOrder(
     });
   });
 
-  // TODO: Publish to Redis pub/sub for WebSocket broadcast
+
 }
 
 /**
@@ -320,6 +320,6 @@ export async function rejectOrder(
       // This is a no-op, but explicit for clarity
     }
 });
-// TODO: Publish to Redis pub/sub for WebSocket broadcast
+
 }
 

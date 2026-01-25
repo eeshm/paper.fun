@@ -1,14 +1,32 @@
 # Solana Paper Trading Platform
 
-A production-grade paper trading platform for Solana that lets users practice trading with virtual funds before risking real money. Built with clean architecture, row-level locking, and comprehensive E2E test coverage.
+A production-grade paper trading simulator for Solana that enables users to practice trading with virtual funds in a risk-free environment. Built to demonstrate correct implementation of wallet authentication, real-time price feeds (Pyth Network), order execution with ACID guarantees, and WebSocket-based portfolio updates.
+
+This project serves as educational infrastructure for the Solana ecosystem, showing developers how to build financially correct trading systems without blockchain complexity. Users authenticate with their Solana wallet but execute all trades against a PostgreSQL ledger—zero private key exposure, zero gas fees, zero financial risk.
+
+> [!IMPORTANT]
+> **PAPER TRADING ONLY**  
+> This platform uses virtual funds only. No real cryptocurrency is traded, transferred, or connected to any blockchain network. Wallet connection is used solely for identity verification.
 
 ---
 
-##  What This Is
+## Why This Matters
 
-This platform simulates real Solana trading with **zero wallet signing** — users authenticate with their wallet but all trades happen with virtual funds stored in PostgreSQL. Real-time prices from Pyth Network, OHLC candlestick charts, WebSocket updates for portfolio changes, and a full order execution engine with proper concurrency controls.
+**For new traders:**
+- Learn Solana trading mechanics without financial risk
+- Practice with real-time Pyth prices in a safe environment
+- Understand order execution, fees, and portfolio management
 
-This demonstrates production patterns: event-driven architecture, worker separation, idempotent operations, and defensive database transactions.
+**For developers:**
+- Reference implementation for Solana wallet authentication
+- Shows production-grade Pyth Network integration via Helius
+- Demonstrates concurrent trading logic with ACID guarantees
+- Reusable packages: auth, pricing, trading engine
+
+**For the ecosystem:**
+- Reduces barrier to entry for Solana DeFi
+- Open-source infrastructure for educational tools
+- Proves patterns applicable to real DEX development
 
 ---
 
@@ -18,10 +36,9 @@ This demonstrates production patterns: event-driven architecture, worker separat
                     ┌─────────────┐
                     │ Pyth Network│
                     └──────┬──────┘
-                           │
+                           │ (via Helius)
                     ┌──────▼───────┐
                     │Price Worker  │
-                    │(Ingestion)   │
                     └──────┬───────┘
                            │
                     ┌──────▼───────┐
@@ -31,47 +48,39 @@ This demonstrates production patterns: event-driven architecture, worker separat
                        │        │        │
            ┌───────────▼─┐   ┌─▼────────▼─────┐
            │Candle Worker│   │   API + WS     │
-           │(Aggregation)│   │   (Express)    │
            └──────┬──────┘   └────────┬───────┘
                   │                   │
            ┌──────▼──────┐      ┌─────▼─────┐
            │  PostgreSQL │      │  Frontend │
-           │  (Candles)  |----->│  (Next.js)│
+           │  (OHLC)     |----->│  (Next.js)│
            └─────────────┘      └───────────┘
 ```
 
-### Why Separate Workers?
-
-| Worker | Responsibility | Why Separate |
-|--------|---------------|--------------|
-| **Price Ingestion** | Fetch from Pyth, publish to Redis | Isolated failure domain, independent scaling |
-| **Candle Aggregation** | Subscribe to prices, build OHLC candles | CPU-bound processing, separate from API latency |
-| **API Server** | HTTP requests, auth, order execution | Stateless, horizontally scalable |
-| **WebSocket Server** | Real-time price/portfolio updates | Stateful connections, needs separate process |
+**Why separate processes?**
+- **Price Worker**: Isolated Pyth ingestion, publishes to Redis pub/sub
+- **Candle Worker**: Aggregates ticks into OHLC candles (CPU-bound, separate from API)
+- **API**: Stateless REST endpoints for orders/portfolio
+- **WebSocket**: Stateful real-time updates for prices and portfolio changes
 
 ---
 
-## Market Data Architecture
+## Market Data: Pyth + Redis + Postgres
 
-### Price Flow
+**Price flow:**
 ```
-Pyth → Price Worker → Redis (latest price)
-                         ↓
-                    Candle Worker → PostgreSQL (OHLC history)
-                         ↓
-                    Chart API (/market/candles)
+Pyth (via Helius) → Price Worker → Redis (execution price)
+                                      ↓
+                                Candle Worker → PostgreSQL (OHLC history)
 ```
 
-### Storage Strategy
+| Data | Storage | Why |
+|------|---------|-----|
+| Latest price | Redis | Sub-millisecond reads for order execution |
+| OHLC candles | PostgreSQL | Historical queries, TradingView charts |
+| Trades | PostgreSQL | Immutable audit log |
+| Sessions | Redis | TTL support, fast auth lookups |
 
-| Data Type | Storage | Reason |
-|-----------|---------|--------|
-| **Latest Price** | Redis | Sub-millisecond reads, pub/sub for real-time |
-| **OHLC Candles** | PostgreSQL | Historical queries, time-series aggregation |
-| **Trades** | PostgreSQL | Immutable audit log, source of truth |
-| **Sessions** | Redis | TTL support, fast lookups |
-
-**Why not all in Postgres?** Redis gives us sub-1ms price reads and native pub/sub. Postgres handles complex queries and transactional guarantees.
+**Design trade-off:** Redis for speed (execution), Postgres for durability (audit + charts).
 
 ---
 
@@ -108,52 +117,38 @@ Pyth → Price Worker → Redis (latest price)
 
 ### Concurrency & Correctness
 
-**Row-Level Locking:**
+**Row-level locking prevents double-spending:**
 ```sql
 SELECT * FROM balances WHERE userId = $1 FOR UPDATE;
 ```
-- Prevents race conditions when multiple orders execute simultaneously
-- User can't double-spend by submitting concurrent orders
+- Concurrent orders from same user are serialized
 - Database-level guarantee (not app-level)
 
-**Idempotency:**
-- Each order has a unique `orderId` (auto-increment)
-- Trades reference `orderId` (foreign key)
-- Duplicate submissions create separate intent records
-- Balance updates are transactional — all-or-nothing
+**Invariants enforced:**
+- No negative balances
+- `available + locked = total` (always)
+- Every order creates exactly one trade
 
-**Invariants Enforced:**
-```typescript
-// MUST hold after every transaction:
-assert(balance.available >= 0);           // No negative balances
-assert(balance.available + balance.locked === computed); // Audit matches
-assert(orderCount === tradeCount);        // Every order executed
-```
+**144 E2E tests** covering:
+- ✅ Double-spend prevention
+- ✅ Insufficient balance rejection
+- ✅ Concurrent order execution
+- ✅ WebSocket auth & subscription lifecycle
+- ✅ Candle aggregation correctness
 
 ---
 
 ## Testing
-
-### E2E Test Coverage (144 tests)
 
 | Test Suite | Tests | Coverage |
 |------------|-------|----------|
 | **Backend E2E** | 103 | Auth, orders, portfolio, candles, concurrency |
 | **Frontend Unit** | 41 | Stores (Zustand), order logic, portfolio calculations |
 
-**Critical Scenarios Tested:**
-- ✅ Double-spend prevention (concurrent orders blocked)
-- ✅ Insufficient balance rejection
-- ✅ Sell > owned position rejection
-- ✅ Order fills update portfolio atomically
-- ✅ P&L calculation accuracy
-- ✅ WebSocket auth & subscription lifecycle
-- ✅ Candle aggregation (OHLC correctness)
-
-**Run Tests:**
+**Run tests:**
 ```bash
 bun run test        # Backend E2E (requires Docker)
-bun run test:web    # Frontend unit tests (no dependencies)
+bun run test:web    # Frontend unit tests
 bun run test:all    # All 144 tests
 ```
 
@@ -171,116 +166,53 @@ This is **v1: Safe Learning Environment**, not a DEX clone.
 - ❌ On-chain transactions (zero wallet signing)
 - ❌ Slippage simulation (fixed 0.1% fee)
 
-**Why?** Each adds 10x complexity. v1 proves product-market fit. v2 can add Jupiter routing, multi-asset, and advanced order types **if** users want them.
+**Why?** Each adds 10x complexity. v1 proves the core mechanics. v2+ can evolve based on community feedback.
 
 ---
 
-## How to Run Locally
+## Roadmap
 
-### Prerequisites
-- **Bun** (v1.0+)
-- **Docker** (for PostgreSQL + Redis)
-- **Solana Wallet** (Phantom/Solflare for frontend auth)
+### v2 (Planned)
+- **Jupiter integration**: Multi-asset routing, real slippage simulation
+- **Advanced orders**: Limit orders, stop-loss, trailing stops
+- **Trade analysis**: Replay historical trades, performance metrics
+- **Dynamic fees**: Market-based fee tiers, maker/taker distinction
 
-### 1. Clone & Install
+### v3 (Future)
+- **Perpetuals simulation**: Leverage, funding rates, liquidations
+- **Copy trading**: Follow and test trading strategies
+- **Bot framework**: Backtest and paper-trade algorithmic strategies
+- **Portfolio analytics**: Sharpe ratio, max drawdown, win rate
+
+**Non-goals:** This will remain paper trading only. No real funds, no on-chain settlement.
+
+---
+
+## Quick Start
+
+**Prerequisites:** Bun, Docker, Solana wallet extension
+
 ```bash
-git clone https://github.com/eeshm/trade.git
-cd trade
-bun install
-```
+# Clone and install
+git clone https://github.com/eeshm/trade.git && cd trade && bun install
 
-### 2. Start Infrastructure
-```bash
-# PostgreSQL (dev)
-docker run -d --name postgres-dev \
-  -p 5432:5432 \
-  -e POSTGRES_PASSWORD=devpass \
-  -e POSTGRES_DB=paper_trading \
-  postgres:16
+# Start infrastructure
+docker-compose up -d
 
-# Redis
-docker run -d --name redis-dev \
-  -p 6379:6379 \
-  redis:7
-```
+# Configure environment
+cp .env.example .env  # Edit with your settings
 
-### 3. Configure Environment
-```bash
-cp .env.example .env
-# Edit .env with your settings (see .env.example for details)
-```
-
-### 4. Apply Database Migrations
-```bash
+# Run migrations
 bun run migrate:dev
-```
 
-### 5. Seed Initial Data
-```bash
-# Seed initial user balances (1000 USDC)
-bunx prisma studio  # Or run seed script if available
-```
-
-### 6. Start Development Servers
-```bash
-# Option 1: Start everything
+# Start all services
 bun run dev
 
-# Option 2: Start individually
-bun run dev:api      # API on :3000
-bun run dev:ws       # WebSocket on :3001
-bun run dev:web      # Frontend on :3002
-bun run dev:price    # Price worker
-bun run dev:candle   # Candle aggregation worker
+# Open http://localhost:3002
 ```
 
-### 7. Access
-- **Frontend:** http://localhost:3002
-- **API Health:** http://localhost:3000/health
-- **WebSocket:** ws://localhost:3001
-
----
-
-## Project Structure
-
-```
-paper-trading/
-├── apps/
-│   ├── api/                  # Express REST API (port 3000)
-│   ├── ws/                   # WebSocket server (port 3001)
-│   └── web/                  # Next.js frontend (port 3002)
-├── packages/
-│   ├── db/                   # Prisma + PostgreSQL (singleton)
-│   ├── redis/                # Redis client + pub/sub
-│   ├── auth/                 # Wallet signing, sessions, nonces
-│   ├── trading/              # Orders, positions, portfolio
-│   ├── pricing/              # Price cache + candle aggregation
-│   ├── events/               # Redis pub/sub event publishing
-│   └── env/                  # Zod-validated environment config
-├── workers/
-│   ├── price-ingestion/      # Pyth network price feed
-│   └── candle-aggregation/   # OHLC candle builder
-├── tests/
-│   ├── e2e/                  # Backend E2E tests (103)
-│   └── web/                  # Frontend unit tests (41)
-└── prisma/
-    └── schema.prisma         # Database schema
-```
-
----
-
-## Security Considerations
-
-**Production Checklist:**
-- [ ] Rate limiting enabled (Redis-based)
-- [ ] JWT secret rotation schedule
-- [ ] CORS whitelist configured
-- [ ] Helmet.js security headers
-- [ ] Input validation (Zod schemas)
-- [ ] SQL injection prevention (Prisma parameterized queries)
-- [ ] XSS prevention (React auto-escaping)
-- [ ] HTTPS enforced (reverse proxy)
-- [ ] Environment secrets in secure vault
+**For detailed setup:** See setup instructions below  
+**For production:** See [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ---
 
@@ -309,38 +241,18 @@ paper-trading/
 
 ## Contributing
 
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Write tests for new functionality
-4. Ensure all tests pass: `bun run test:all`
-5. Submit a PR with a clear description
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development workflow.
 
-**Code Standards:**
+**Code standards:**
 - TypeScript strict mode
-- No `any` types
-- All public functions documented
 - E2E tests for critical paths
+- No `any` types
 
 ---
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details
-
----
-
-## Learning Resources
-
-**Solana Concepts:**
-- [Pyth Network Documentation](https://docs.pyth.network/)
-- [Wallet Adapter Docs](https://github.com/solana-labs/wallet-adapter)
-
----
-
-## Support
-
-- **Issues:** [GitHub Issues](https://github.com/eeshm/trade/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/eeshm/trade/discussions)
+MIT License - see [LICENSE](./LICENSE)
 
 ---
 

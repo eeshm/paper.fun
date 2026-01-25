@@ -29,9 +29,6 @@ export async function handleAuth(
     // Attach user info to socket
     ws.userId = session.userId;
 
-    //TODO: attach wallet address
-    // ws.walletAddress = session.walletAddress!;
-
     console.log(`[WS Auth] User ${session.userId} authenticated successfully`);
     sendMessage(ws, { type: "auth", success: true });
   } catch (error) {
