@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-    title: 'Solana Paper Trading',
-    description: 'Real‑time paper trading on SOL/USD',
+    title: 'paper.fun',
+    description: 'Paper trading for Solana - practice with zero risk',
 };
 
 export default function RootLayout({

@@ -81,20 +81,20 @@ export default function Home() {
       <header className="sticky top-0 z-40 bg-background">
         <div className="w-full px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-medium tracking-tight text-foreground">Paper Trading</h1>
-            <div className={`px-2 py-0.5 rounded text-[10px] font-medium ${wsConnected
-              ? 'bg-green-500/10 text-green-500'
-              : 'bg-red-500/10 text-red-500'
+            <h1 className="text-sm font-medium tracking-tight text-foreground">paper.fun</h1>
+            {/* <div className={`px-2 py-0.5 rounded text-[10px] font-medium ${wsConnected
+            ? 'bg-green-500/10 text-green-500'
+            : 'bg-red-500/10 text-red-500'
               }`}>
-              {wsConnected ? '● Live' : '○ Offline'}
-            </div>
+            {wsConnected ? '● Live' : '○ Offline'}
+          </div> */}
           </div>
           <WalletConnect />
         </div>
-      </header>
+      </header >
 
       {/* Main Content */}
-      <main className="w-full min-h-[calc(100vh-4rem)] p-4 space-y-4">
+      < main className="w-full min-h-[calc(100vh-4rem)] p-4 space-y-4" >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Top Row: Chart (Left 3/4) and Order Form (Right 1/4) */}
           <div className="lg:col-span-9 min-h-[600px]">
@@ -126,7 +126,7 @@ export default function Home() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }

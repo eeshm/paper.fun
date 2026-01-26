@@ -1,4 +1,4 @@
-# Solana Paper Trading Platform
+# paper.fun
 
 A production-grade paper trading simulator for Solana that enables users to practice trading with virtual funds in a risk-free environment. Built to demonstrate correct implementation of wallet authentication, real-time price feeds (Pyth Network), order execution with ACID guarantees, and WebSocket-based portfolio updates.
 

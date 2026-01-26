@@ -1,5 +1,5 @@
 {
-  "name": "paper-trading",
+  "name": "paper.fun",
   "private": true,
   "scripts": {
     "build": "turbo run build",

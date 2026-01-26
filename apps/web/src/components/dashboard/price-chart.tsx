@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';
+import Image from 'next/image';
 import { createChart, ColorType, CandlestickSeries, AreaSeries } from 'lightweight-charts';
 import type { IChartApi, ISeriesApi, CandlestickData, Time, SingleValueData } from 'lightweight-charts';
 import { PriceData } from '@/types';
@@ -262,7 +263,7 @@ export function PriceChart({ prices }: PriceChartProps) {
       const dataLength = initialData.length;
       if (dataLength > 0) {
         chart.timeScale().setVisibleLogicalRange({
-          from: Math.max(0, dataLength - 60), // Show last 60 candles
+          from: Math.max(0, dataLength - 30), // Show last 60 candles
           to: dataLength - 1,
         });
       }
@@ -361,7 +362,11 @@ export function PriceChart({ prices }: PriceChartProps) {
     : 0;
 
   return (
-    <DashboardWrapper name="SOL/USD Price Chart" className="h-full">
+    <DashboardWrapper
+      name="SOL/USD Price Chart"
+      className="h-full"
+      icon={<Image src="/solana.svg" alt="Solana" width={16} height={16} />}
+    >
       <Card className="h-full overflow-hidden py-0">
         <CardContent className="flex-1 min-h-0 min-w-0 flex flex-col py-4 h-full">
           <div className="flex items-center justify-between mb-2 shrink-0">

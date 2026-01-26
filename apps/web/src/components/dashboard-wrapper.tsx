@@ -7,12 +7,14 @@ interface DashboardWrapperProps {
     name: string;
     children: React.ReactNode;
     className?: string;
+    icon?: React.ReactNode;
 }
 
 export const DashboardWrapper = ({
     name,
     children,
     className,
+    icon,
 }: DashboardWrapperProps) => {
     return (
         <div
@@ -23,6 +25,7 @@ export const DashboardWrapper = ({
         >
             <div className="pb-1.5 h-8 py-1 pl-3 pr-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                    {icon && <span className="shrink-0">{icon}</span>}
                     <span className="text-xs text-muted-foreground font-medium leading-none uppercase tracking-wider">
                         {name}
                     </span>

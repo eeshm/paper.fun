@@ -1,4 +1,4 @@
-# Contributing to Solana Paper Trading Platform
+# Contributing to paper.fun
 
 Thank you for your interest in contributing! This project is a production-grade paper trading platform designed for learning and testing.
 

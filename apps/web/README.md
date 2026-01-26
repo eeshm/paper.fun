@@ -1,4 +1,4 @@
-# Solana Paper Trading Platform - Next.js Frontend
+# paper.fun - Next.js Frontend
 
 A modern, real-time paper trading platform for Solana built with Next.js 14, TypeScript, and Tailwind CSS.
 
