@@ -95,6 +95,10 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
   const handleMessageRef = useRef(handleMessage);
   handleMessageRef.current = handleMessage;
 
+  // Use ref for token to avoid reconnection when it changes
+  const tokenRef = useRef(token);
+  tokenRef.current = token;
+
   const connect = useCallback(() => {
     // Prevent multiple simultaneous connections
     if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
@@ -118,10 +122,10 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
         reconnectDelay.current = 1000;
 
         // Authenticate if token is available
-        if (token) {
+        if (tokenRef.current) {
           try {
             if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'auth', token }));
+              ws.send(JSON.stringify({ type: 'auth', token: tokenRef.current }));
             }
           } catch (error) {
             console.error('Failed to send auth message:', error);
@@ -185,7 +189,7 @@ export function useWebSocket({ token, enabled = true }: UseWebSocketProps) {
       console.error('Failed to connect WebSocket:', error);
       toast.error('Failed to connect to WebSocket server');
     }
-  }, [enabled, token, WS_URL]); // handleMessage uses ref pattern to avoid stale closures
+  }, [enabled, WS_URL]); // Removed token from deps - uses tokenRef to avoid reconnection
 
   const disconnect = useCallback(() => {
     if (wsRef.current) {
