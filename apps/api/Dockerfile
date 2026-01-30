@@ -1,10 +1,10 @@
 # API Server Dockerfile
-FROM oven/bun:1.1-alpine AS base
+FROM oven/bun:latest AS base
 WORKDIR /app
 
 # Install dependencies first (better layer caching)
 FROM base AS deps
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/db/package.json ./packages/db/
 COPY packages/auth/package.json ./packages/auth/
@@ -35,9 +35,9 @@ COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/
 COPY --from=builder /app/package.json ./
 
-# Create non-root user for security
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 api --ingroup nodejs
+# Create non-root user for security (Debian syntax)
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs api
 USER api
 
 EXPOSE 3000

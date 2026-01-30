@@ -1,10 +1,10 @@
 # Candle Aggregation Worker Dockerfile
-FROM oven/bun:1.1-alpine AS base
+FROM oven/bun:latest AS base
 WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 COPY workers/candle-aggregation/package.json ./workers/candle-aggregation/
 COPY packages/db/package.json ./packages/db/
 COPY packages/env/package.json ./packages/env/
@@ -27,9 +27,9 @@ COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/workers/candle-aggregation ./workers/candle-aggregation
 COPY --from=builder /app/package.json ./
 
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 worker --ingroup nodejs
+# Create non-root user (Debian syntax)
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs worker
 USER worker
 
 CMD ["bun", "run", "--cwd", "workers/candle-aggregation", "start"]
