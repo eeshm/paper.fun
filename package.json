@@ -41,7 +41,7 @@
     "supertest": "^7.0.0",
     "turbo": "^2.7.0",
     "tweetnacl": "^1.0.3",
-    "typescript": "^5.4.5",
+    "typescript": "5.4.5",
     "vitest": "^1.6.0",
     "ws": "^8.14.2"
   },

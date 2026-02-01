@@ -17,7 +17,7 @@
     "pg": "^8.12.0"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc",
     "lint": "eslint --max-warnings 0",
     "check-types": "tsc --noEmit",
     "migrate:dev": "prisma migrate dev",
@@ -31,6 +31,6 @@
     "@types/pg": "^8.11.6",
     "eslint": "^9.39.1",
     "prisma": "^6.19.1",
-    "typescript": "^5.4.5"
+    "typescript": "5.4.5"
   }
 }
