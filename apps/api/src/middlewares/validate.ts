@@ -5,7 +5,7 @@
  * Returns 400 Bad Request with detailed errors on validation failure.
  */
 
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { z, ZodError,  type ZodSchema } from "zod";
 
 interface ValidationSchemas {
@@ -20,7 +20,7 @@ interface ValidationSchemas {
  * @param schemas Object containing Zod schemas for body, params, query
  * @returns Express middleware
  */
-export function validate(schemas: ValidationSchemas) {
+export function validate(schemas: ValidationSchemas): RequestHandler {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       // Validate body
@@ -69,20 +69,20 @@ export function validate(schemas: ValidationSchemas) {
 /**
  * Validate body only (shorthand)
  */
-export function validateBody(schema:ZodSchema){
+export function validateBody(schema:ZodSchema): RequestHandler {
     return validate({ body: schema });
 }
 
 /**
  * Validate params only (shorthand)
  */
-export function validateParams(schema:ZodSchema){
+export function validateParams(schema:ZodSchema): RequestHandler {
     return validate({ params: schema });
 }
 
 /**
  * Validate query only (shorthand)
  */
-export function validateQuery(schema:ZodSchema){
+export function validateQuery(schema:ZodSchema): RequestHandler {
     return validate({ query: schema });
 }
