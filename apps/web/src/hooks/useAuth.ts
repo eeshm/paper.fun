@@ -100,7 +100,6 @@ export function useAuth() {
       logoutStore();
       toast.success('Logged out successfully');
     } catch (error) {
-      console.error('Logout error:', error);
       // Still clear local state even if API call fails
       logoutStore();
       toast.success('Logged out');

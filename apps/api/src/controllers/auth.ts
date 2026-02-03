@@ -109,7 +109,6 @@ export async function logout(req: Request, res: Response): Promise<void> {
 
     res.json({ success: true });
   } catch (error) {
-    console.error("logout error:", error);
     res.status(500).json({ error: "Logout failed" });
   }
 }
