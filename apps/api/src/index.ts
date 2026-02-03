@@ -1,13 +1,13 @@
 import express from "express";
 import type { Express } from "express";
 import { initDb, checkDbHealth, shutdownDb } from "@repo/db";
-import { requestIdMiddleware, errorHandler } from "./middlewares/index.ts";
+import { requestIdMiddleware, errorHandler } from "./middlewares/index.js";
 import { isRedisHealthy, initRedis } from "@repo/redis";
-import authRouter from "./routes/auth.ts";
-import orderRouter from "./routes/orders.ts";
-import portfolioRouter from "./routes/portfolio.ts";
-import marketRouter from "./routes/market.ts";
-import { applySecurity } from "./middlewares/index.ts";
+import authRouter from "./routes/auth.js";
+import orderRouter from "./routes/orders.js";
+import portfolioRouter from "./routes/portfolio.js";
+import marketRouter from "./routes/market.js";
+import { applySecurity } from "./middlewares/index.js";
 import { seedDevelopmentPrices } from "@repo/pricing";
 
 export function createApp(): Express {

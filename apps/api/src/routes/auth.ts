@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { getNonce, login, logout } from "../controllers/auth.ts";
-import { authMiddleware } from "../middlewares/auth.ts";
-import { authRateLimiter, validateBody } from "../middlewares/index.ts";
-import { getNonceSchema, loginSchema } from "../schemas/index.ts";
+import { getNonce, login, logout } from "../controllers/auth.js";
+import { authMiddleware } from "../middlewares/auth.js";
+import { authRateLimiter, validateBody } from "../middlewares/index.js";
+import { getNonceSchema, loginSchema } from "../schemas/index.js";
 
 const router: Router = Router();
 /**

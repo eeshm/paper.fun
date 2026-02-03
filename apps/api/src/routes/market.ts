@@ -3,9 +3,9 @@ import {
   getPriceHandler,
   getAllPricesHandler,
   getMarketStatusHandler,
-} from "../controllers/market.ts";
-import { getCandlesHandler } from "../controllers/candles.ts";
-import { publicRateLimiter } from "../middlewares/index.ts";
+} from "../controllers/market.js";
+import { getCandlesHandler } from "../controllers/candles.js";
+import { publicRateLimiter } from "../middlewares/index.js";
 
 
 const router: Router = Router();

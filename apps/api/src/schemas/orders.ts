@@ -8,7 +8,7 @@ import {
   assetSchema,
   orderSideSchema,
   positiveIntSchema,
-} from "./common.ts";
+} from "./common.js";
 
 /**
  * POST /orders body

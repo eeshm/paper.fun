@@ -1,5 +1,5 @@
-export { requestIdMiddleware } from './requestId.ts';
-export { errorHandler } from './errorHandler.ts';
+export { requestIdMiddleware } from './requestId.js';
+export { errorHandler } from './errorHandler.js';
 
 export {
   createRateLimiter,
@@ -8,15 +8,15 @@ export {
   readRateLimiter,
   publicRateLimiter,
   strictRateLimiter,
-} from "./rateLimit.ts";
+} from "./rateLimit.js";
 
 export {
   validate,
   validateBody,
   validateParams,
   validateQuery,
-} from "./validate.ts";
+} from "./validate.js";
 
 export {
   applySecurity,
-} from "./security.ts";
+} from "./security.js";

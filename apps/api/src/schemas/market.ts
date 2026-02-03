@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { symbolSchema } from "./common.ts";
+import { symbolSchema } from "./common.js";
 
 /**
  * GET /market/price/:symbol params

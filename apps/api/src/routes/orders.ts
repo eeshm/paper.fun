@@ -1,22 +1,22 @@
 import { Router } from "express";
-import { authMiddleware } from "../middlewares/auth.ts";
+import { authMiddleware } from "../middlewares/auth.js";
 import {
   placeOrderHandler,
   getOrderHandler,
   getUserOrdersHandler,
-} from "../controllers/orders.ts";
+} from "../controllers/orders.js";
 import {
   orderRateLimiter,
   readRateLimiter,
   validateBody,
   validateParams,
   validateQuery,
-} from "../middlewares/index.ts";
+} from "../middlewares/index.js";
 import {
   placeOrderSchema,
   getOrderParamsSchema,
   listOrdersQuerySchema,
-} from "../schemas/index.ts";
+} from "../schemas/index.js";
 
 const router: Router = Router()
 
