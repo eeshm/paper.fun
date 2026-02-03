@@ -87,8 +87,8 @@ if (isMainModule) {
     const app = createApp();
     const port = process.env.API_PORT || 3000;
 
-    const server = app.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+    const server = app.listen(Number(port), "0.0.0.0", () => {
+      console.log(`Server running on port ${port} (0.0.0.0)`);
     });
 
     const shutdown = async (signal: string) => {
