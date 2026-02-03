@@ -6,7 +6,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "allowImportingTsExtensions": true,
-    "noEmit": true 
+    "noEmit": true
   },
   "include": [
     "src/**/*.ts"

@@ -23,7 +23,8 @@ import { getPriceWithMetadata, SUPPORTED_SYMBOLS } from "@repo/pricing";
  */
 export async function getPriceHandler(req: Request, res: Response) {
   try {
-    const { symbol } = req.params;
+    const symbolParam = req.params.symbol;
+    const symbol = Array.isArray(symbolParam) ? symbolParam[0] : symbolParam;
 
     if (!symbol) {
       res.status(400).json({
