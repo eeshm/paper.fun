@@ -74,7 +74,7 @@ export function configureCORS(app: Express): void {
           return;
         }
 
-        if (allowedOrigins.includes(origin)) {
+        if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
           callback(null, true);
         } else {
           callback(new Error("Not allowed by CORS"));
@@ -119,9 +119,10 @@ function getAllowedOrigins(): string[] {
     case "production":
       // Production: Only allow specific domains
       return [
-        process.env.FRONTEND_URL || "https://yourdomain.com",
-        process.env.ADMIN_URL || "https://admin.yourdomain.com",
-      ].filter(Boolean);
+        process.env.FRONTEND_URL,
+        "https://paper-fun.vercel.app",
+        process.env.ADMIN_URL,
+      ].filter(Boolean) as string[];
 
     case "staging":
       // Staging: Allow staging domains
