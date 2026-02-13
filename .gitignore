@@ -50,5 +50,6 @@ scripts*
 .agents/
 .gemini/
 .agent/
+.opencode/
 
 AWS.md
