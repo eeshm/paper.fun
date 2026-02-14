@@ -4,7 +4,7 @@ Get the Next.js paper trading frontend running in 5 minutes.
 
 ## Prerequisites
 
-✅ Node.js 18+ or Bun runtime installed  
+✅ Node.js 20.9+ (or newer) and Bun installed  
 ✅ Phantom or Solflare wallet extension  
 ✅ Backend running (API on :3000, WebSocket on :3001)
 

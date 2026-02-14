@@ -123,7 +123,7 @@ export function OrderForm() {
                 type="button"
                 variant={side === 'buy' ? 'default' : 'outline'}
                 onClick={() => setSide('buy')}
-                className={`flex-1 rounded-xs ${side === 'buy' ? 'bg-green-700 hover:bg-green-700 text-white' : ''}`}
+                className={`flex-1 rounded-xs ${side === 'buy' ? 'bg-[#107a4d] hover:bg-[#107a4d]/80 text-white' : ''}`}
               >
                 Buy SOL
               </Button>
@@ -131,7 +131,7 @@ export function OrderForm() {
                 type="button"
                 variant={side === 'sell' ? 'default' : 'outline'}
                 onClick={() => setSide('sell')}
-                className={`flex-1 rounded-xs ${side === 'sell' ? 'bg-red-700 hover:bg-red-700 text-white' : ''}`}
+                className={`flex-1 rounded-xs ${side === 'sell' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}`}
               >
                 Sell SOL
               </Button>
@@ -226,11 +226,10 @@ export function OrderForm() {
               <Button
                 type="submit"
                 disabled={isLoading || !size || hasInsufficientFunds}
-                className={`w-full rounded-md ${hasInsufficientFunds
-                  ? `cursor-not-allowed pointer-events-none  ${side === 'buy' ? 'bg-green-600' : 'bg-red-600'}`
+                className={`w-full rounded-md ${hasInsufficientFunds ? `cursor-not-allowed pointer-events-none  ${side === 'buy' ? 'bg-[#107a4d]' : 'bg-red-600'}`
                   : side === 'buy'
-                    ? 'bg-green-700 hover:bg-green-700'
-                    : 'bg-red-700 hover:bg-red-700'
+                    ? 'bg-[#107a4d] hover:bg-[#107a4d]/80'
+                    : 'bg-red-600 hover:bg-red-700'
                   }`}
               >
                 {isLoading ? (

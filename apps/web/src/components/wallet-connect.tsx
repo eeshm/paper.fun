@@ -28,11 +28,13 @@ export function WalletConnect({ className }: WalletConnectProps) {
   const { isAuthenticated, logout, login } = useAuth();
   const resetTradingStore = useTradingStore((state) => state.reset);
   const [hasAttemptedLogin, setHasAttemptedLogin] = useState(false);
+  const walletReady = connected || !!publicKey;
+  const walletAddress = publicKey?.toBase58();
 
   // Auto-trigger login when wallet connects
   useEffect(() => {
     const autoLogin = async () => {
-      if (connected && !isAuthenticated && !hasAttemptedLogin) {
+      if (walletReady && !isAuthenticated && !hasAttemptedLogin) {
         setHasAttemptedLogin(true);
         try {
           await login();
@@ -44,18 +46,18 @@ export function WalletConnect({ className }: WalletConnectProps) {
     };
 
     autoLogin();
-  }, [connected, isAuthenticated, hasAttemptedLogin, login]);
+  }, [walletReady, isAuthenticated, hasAttemptedLogin, login]);
 
   // Reset attempt flag when wallet disconnects
   useEffect(() => {
-    if (!connected) {
+    if (!walletReady) {
       setHasAttemptedLogin(false);
     }
-  }, [connected]);
+  }, [walletReady]);
 
   const copyAddress = () => {
-    if (publicKey) {
-      navigator.clipboard.writeText(publicKey.toBase58());
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
       toast.success('Address copied to clipboard');
     }
   };
@@ -76,7 +78,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
   };
 
   // Not connected - show Connect Wallet button
-  if (!connected) {
+  if (!walletReady) {
     return (
       <Button
         onClick={() => setVisible(true)}
@@ -89,7 +91,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
   }
 
   // Connected but not authenticated - show Sign in to Trade button
-  if (connected && !isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <Button
         onClick={handleSignIn}
@@ -106,13 +108,13 @@ export function WalletConnect({ className }: WalletConnectProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="font-mono outline-0 h-8  w-32 hover:border-none border-none rounded-xs hover:outline-0 hover:bg-border hover:cursor-pointer bg-border/80">
-          {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-6)}
+          {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-6)}` : 'Connected'}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-32 bg-border">
         <DropdownMenuItem onClick={copyAddress} className='hover:bg-card/60 hover:cursor-pointer'>
           <Copy className="mr-0 h-4 w-4" />
-          {publicKey?.toBase58().slice(0, 4)}...{publicKey?.toBase58().slice(-6)}
+          {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-6)}` : 'Wallet'}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleDisconnect} className='hover:bg-card/60 hover:cursor-pointer'>
           <span>Disconnect</span>
