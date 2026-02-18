@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
     title: 'paper.fun',
     description: 'Paper trading for Solana - practice with zero risk',
+    icons: {
+        icon: '/logo.svg?v=1',
+        shortcut: '/logo.svg?v=1',
+        apple: '/logo.svg?v=1',
+    },
 };
 
 export default function RootLayout({
