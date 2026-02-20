@@ -58,6 +58,7 @@ export default function TradePage() {
     }
   }, [isAuthenticated, token, setBalances, setPositions, setOrders]);
 
+
   useEffect(() => {
     if (wsConnected) {
       subscribe('prices');

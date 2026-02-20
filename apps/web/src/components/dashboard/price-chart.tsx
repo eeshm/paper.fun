@@ -108,14 +108,20 @@ export function PriceChart({ prices }: PriceChartProps) {
 
   // Fetch data on mount
   useEffect(() => {
+    let isMounted = true;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const loadData = async () => {
+      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       try {
         const initialData = await fetchCandles();
 
+        if (!isMounted) return;
+
         if (initialData.length === 0) {
-          setTimeout(loadData, 2000);
+          timeoutId = setTimeout(loadData, 2000);
           return;
         }
 
@@ -123,15 +129,21 @@ export function PriceChart({ prices }: PriceChartProps) {
         setIsLoading(false);
         hasFetchedRef.current = true;
       } catch (err) {
+        if (!isMounted) return;
         console.warn('Candle history unavailable, retrying...', err);
         setError('Waiting for candle history...');
-        setTimeout(loadData, 2000);
+        timeoutId = setTimeout(loadData, 2000);
       }
     };
 
     if (!hasFetchedRef.current) {
       loadData();
     }
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [fetchCandles]);
 
   // Initialize chart
@@ -269,7 +281,7 @@ export function PriceChart({ prices }: PriceChartProps) {
     if (!seriesRef.current || currentPrice === 0 || isLoading) return;
 
     const now = Math.floor(Date.now() / 1000);
-    const candleInterval = 30;
+    const candleInterval = 60; // 1m to match API timeframe
     const currentCandleTime = Math.floor(now / candleInterval) * candleInterval;
 
     if (priceHistoryRef.current.length === 0) return;
@@ -287,7 +299,7 @@ export function PriceChart({ prices }: PriceChartProps) {
       };
       priceHistoryRef.current.push(newCandle);
       if (priceHistoryRef.current.length > MAX_HISTORY_CANDLES) {
-        priceHistoryRef.current = priceHistoryRef.current.slice(-MAX_HISTORY_CANDLES);
+        priceHistoryRef.current.shift();
       }
 
       if (chartType === 'candlestick') {
